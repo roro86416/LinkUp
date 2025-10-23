@@ -1,0 +1,3 @@
+{
+  "extends": ["@linkup/eslint-config-custom"]
+}
