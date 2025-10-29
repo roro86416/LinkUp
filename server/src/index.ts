@@ -10,7 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 app.get("/api/test", (req: Request, res: Response) => {
-  res.json({ message: "Hello from LinkUp server! 🚀" });
+  res.json({ message: "愛來自LinkUp伺服器! 🚀" });
 });
 
 app.listen(port, () => {
