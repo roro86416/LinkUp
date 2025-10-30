@@ -38,4 +38,25 @@ router.post("/", async (req: Request, res: Response) => {
   }
 });
 
+router.put("/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const dataToUpdate = req.body;
+    const updateProduct = await prisma.product.update({
+      where: { id },
+      data: dataToUpdate,
+    });
+    res.json({
+      status: "success",
+      data: updateProduct,
+    });
+  } catch (error) {
+    const e = error as Error;
+    res.status(500).json({
+      status: "error",
+      message: e.message,
+    });
+  }
+});
+
 export default router;
