@@ -59,4 +59,23 @@ router.put("/:id", async (req: Request, res: Response) => {
   }
 });
 
+router.delete("/:id", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const deleteProduct = await prisma.product.delete({
+      where: { id },
+    });
+    res.json({
+      status: "success",
+      data: deleteProduct,
+    });
+  } catch (error) {
+    const e = error as Error;
+    res.status(500).json({
+      status: "error",
+      message: "無法刪除商品",
+    });
+  }
+});
+
 export default router;
