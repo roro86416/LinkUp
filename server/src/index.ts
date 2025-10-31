@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import productRoutes from "./api/api-products";
+import productRoutes from "./api/products-api";
 
 dotenv.config();
 const app: Express = express();

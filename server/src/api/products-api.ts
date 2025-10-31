@@ -6,7 +6,9 @@ const router = Router();
 
 router.get("/", async (req: Request, res: Response) => {
   try {
-    const products = await prisma.product.findMany();
+    const products = await prisma.product.findMany({
+      include: { variants: true },
+    });
     res.json({
       status: "success",
       data: products,
@@ -22,8 +24,17 @@ router.get("/", async (req: Request, res: Response) => {
 
 router.post("/", async (req: Request, res: Response) => {
   try {
+    const { variants, ...productData } = req.body;
     const newProducts = await prisma.product.create({
-      data: req.body,
+      data: {
+        ...productData,
+        variants: {
+          create: variants,
+        },
+        include: {
+          variants: true,
+        },
+      },
     });
     res.status(201).json({
       status: "success",
