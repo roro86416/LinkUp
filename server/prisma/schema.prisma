@@ -1,15 +1,373 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+// -------------------------------------------------
+// 專案共用的枚舉 (Enums)
+// -------------------------------------------------
+
+// --- 模組三：的枚舉 ---
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  completed
+  cancelled
+}
+
+enum ItemType {
+  ticket_types
+  products
+}
+
+enum DeliveryMethod {
+  shipping
+  on_site_pickup
+}
+
+// --- 模組二 & 四 的枚舉 ---
+enum EventStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EventType {
+  OFFLINE
+  ONLINE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum CheckInStatus {
+  SUCCESS
+  DUPLICATE
+  INVALID
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  EXPIRED
+  CANCELLED
+}
+
+enum UserRole {
+  USER
+  ORGANIZER
+  ADMIN
+}
+
+// -------------------------------------------------
+// 模組一：共用模型 (User)
+// -------------------------------------------------
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String?
+  role  UserRole @default(USER)
+
+  organizedEvents Event[] @relation("OrganizedBy")
+  cart    Cart?
+  orders  Order[]
+  scannedLogs CheckIn[] @relation("ScannedBy")
+  tickets     Ticket[]  @relation("OwnedBy")
+}
+
+// -------------------------------------------------
+// 模組二：的依賴模型
+// -------------------------------------------------
+model Category {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  events Event[]
+}
+
+model Tag {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  events Event[] @relation("EventTags")
+}
+
+// -------------------------------------------------
+// 模組三：商城 (Products) 
+// -------------------------------------------------
+model Product {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  base_price  Decimal  @db.Decimal(10, 2)
+  image_url   String?  @db.VarChar(255)
+  variants    ProductVariant[]
+  
+  events_products EventsProducts[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id               Int      @id @default(autoincrement())
+  product_id       Int
+  product          Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  sku              String?  @unique @db.VarChar(100)
+  option1_name     String?  @db.VarChar(50)
+  option1_value    String?  @db.VarChar(50)
+  option2_name     String?  @db.VarChar(50)
+  option2_value    String?  @db.VarChar(50)
+  price_offset     Decimal  @default(0) @db.Decimal(10, 2)
+  stock_quantity   Int      @default(0) @map("stock")
+  cart_items       CartItem[]
+  order_items      OrderItem[]
+
+  @@map("ProductVariant")
+}
+
+model EventsProducts {
+  event_id   Int
+  product_id Int
+  
+  event   Event   @relation(fields: [event_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@id([event_id, product_id])
+  @@map("events_products")
+}
+
+// -------------------------------------------------
+// 模組三：購物車 (Carts) 
+// -------------------------------------------------
+model Cart {
+  id         Int       @id @default(autoincrement())
+  user_id    Int       @unique
+  updated_at DateTime? @updatedAt
+  items      CartItem[]
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@map("Cart")
+}
+
+model CartItem {
+  id           Int      @id @default(autoincrement())
+  cart_id      Int
+  cart         Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  item_type    ItemType
+  quantity     Int
+  added_at     DateTime @default(now())
+
+  ticket_type_id Int?
+  ticket_type    TicketType? @relation(fields: [ticket_type_id], references: [id])
+
+  product_variant_id Int?
+  product_variant    ProductVariant? @relation(fields: [product_variant_id], references: [id])
+
+  @@map("CartItem")
+}
+
+// -------------------------------------------------
+// 模組三：結帳 (Orders)
+// -------------------------------------------------
+model Order {
+  id              Int         @id @default(autoincrement())
+  order_number    String      @unique @db.VarChar(50)
+  user_id         Int
+  subtotal        Decimal     @db.Decimal(10, 2)
+  discount_amount Decimal     @default(0) @db.Decimal(10, 2)
+  total_amount    Decimal     @db.Decimal(10, 2)
+  coupon_code     String?     @db.VarChar(50)
+  status          OrderStatus @default(pending)
+  billing_name    String      @db.VarChar(100)
+  billing_phone   String      @db.VarChar(20)
+  billing_address String?     @db.Text
+  payment_method  String?     @db.VarChar(50)
+  created_at      DateTime    @default(now())
+  expires_at      DateTime
+  items           OrderItem[]
+
+  user User @relation(fields: [user_id], references: [id])
+
+  coupon_id Int?
+  coupon    Coupon? @relation(fields: [coupon_id], references: [id])
+
+  @@map("Order")
+}
+
+model OrderItem {
+  id                  Int      @id @default(autoincrement())
+  order_id            Int
+  order               Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  item_type           ItemType
+  item_name           String   @db.VarChar(255)
+  variant_description String?  @db.VarChar(100)
+  quantity            Int
+  unit_price          Decimal  @db.Decimal(10, 2)
+  delivery_method     DeliveryMethod?
+
+  ticket_type_id Int?
+  ticket_type    TicketType? @relation(fields: [ticket_type_id], references: [id])
+
+  product_variant_id Int?
+  product_variant    ProductVariant? @relation(fields: [product_variant_id], references: [id])
+
+  ticket_registration TicketRegistration?
+
+  @@map("OrderItem")
+}
+
+model TicketRegistration {
+  id            Int       @id @default(autoincrement())
+  order_item_id Int       @unique
+  order_item    OrderItem @relation(fields: [order_item_id], references: [id], onDelete: Cascade)
+  
+  ticket_id     Int?      @unique
+  ticket        Ticket?   @relation(fields: [ticket_id], references: [id])
+
+  name  String @db.VarChar(100)
+  email String @db.VarChar(255)
+  phone String @db.VarChar(20)
+
+  @@map("Ticket_Registration")
+}
+
+
+// -------------------------------------------------
+// 模組二 & 四
+// -------------------------------------------------
+
+model Event {
+  id                Int      @id @default(autoincrement())
+  title             String   @db.VarChar(255)
+  subtitle          String?  @db.VarChar(255)
+  description       String?  @db.Text
+  cover_image       String   @db.VarChar(255)
+  start_time        DateTime
+  end_time          DateTime
+  location_name     String?  @db.VarChar(100)
+  address           String?  @db.VarChar(255)
+  latitude          Decimal? @db.Decimal(10, 8)
+  longitude         Decimal? @db.Decimal(11, 8)
+  status            EventStatus
+  event_type        EventType
+  online_event_url  String?  @db.VarChar(255)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  organizer_id      Int
+  organizer         User   @relation("OrganizedBy", fields: [organizer_id], references: [id])
+
+  category_id       Int?
+  category          Category? @relation(fields: [category_id], references: [id])
+
+  tags              Tag[] @relation("EventTags")
+  
+  guests            EventGuest[]
+  attachments       EventAttachment[]
+  coupons           Coupon[]
+  products          EventsProducts[]
+  ticketTypes       TicketType[]
+
+  @@map("events")
+}
+
+model EventGuest {
+  id        Int     @id @default(autoincrement())
+  name      String  @db.VarChar(100)
+  bio       String? @db.Text
+  photo_url String? @db.VarChar(255)
+  
+  event_id  Int
+  event     Event   @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  
+  @@map("event_guests")
+}
+
+model EventAttachment {
+  id        Int    @id @default(autoincrement())
+  file_name String @db.VarChar(255)
+  file_url  String @db.VarChar(255)
+
+  event_id  Int
+  event     Event  @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  
+  @@map("event_attachments")
+}
+
+model Coupon {
+  id             Int          @id @default(autoincrement())
+  code           String       @unique @db.VarChar(50)
+  discount_type  DiscountType
+  value          Decimal      @db.Decimal(10, 2)
+  expires_at     DateTime
+  usage_limit    Int
+  used_count     Int          @default(0)
+
+  event_id       Int?
+  event          Event?       @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  
+  orders         Order[]
+
+  @@map("coupons")
+}
+
+model TicketType {
+  id                Int       @id @default(autoincrement())
+  name              String    @db.VarChar(100)
+  price             Decimal   @db.Decimal(10, 2)
+  total_quantity    Int
+  sale_start_time   DateTime
+  sale_end_time     DateTime
+
+  event_id          Int
+  event             Event     @relation(fields: [event_id], references: [id], onDelete: Cascade)
+
+  cart_items        CartItem[]
+  order_items       OrderItem[]
+  
+  tickets           Ticket[]
+
+  @@map("ticket_types")
+}
+
+model Ticket {
+  id            Int       @id @default(autoincrement())
+  qr_code_data  String    @unique @db.VarChar(255)
+  status        TicketStatus
+  issued_at     DateTime  @default(now())
+
+  ticket_type_id Int
+  ticket_type   TicketType @relation(fields: [ticket_type_id], references: [id])
+
+  owner_id      Int
+  owner         User      @relation("OwnedBy", fields: [owner_id], references: [id])
+  
+  check_ins     CheckIn[]
+
+  ticket_registration TicketRegistration?
+
+  @@map("tickets")
+}
+
+model CheckIn {
+  id          Int       @id @default(autoincrement())
+  scan_time   DateTime?
+  status      CheckInStatus
+  device_info String?   @db.VarChar(255)
+
+  ticket_id   Int
+  ticket      Ticket    @relation(fields: [ticket_id], references: [id])
+
+  scanner_id  Int
+  scanner     User      @relation("ScannedBy", fields: [scanner_id], references: [id])
+  
+  @@map("check_ins")
 }
