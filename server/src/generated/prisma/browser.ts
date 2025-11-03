@@ -22,10 +22,55 @@ export * from './enums';
  */
 export type User = Prisma.UserModel
 /**
+ * Model Notification
+ * 
+ */
+export type Notification = Prisma.NotificationModel
+/**
+ * Model UserNotificationStatus
+ * 
+ */
+export type UserNotificationStatus = Prisma.UserNotificationStatusModel
+/**
+ * Model NotificationTemplate
+ * 
+ */
+export type NotificationTemplate = Prisma.NotificationTemplateModel
+/**
+ * Model Review
+ * 
+ */
+export type Review = Prisma.ReviewModel
+/**
  * Model UserProvider
  * 
  */
 export type UserProvider = Prisma.UserProviderModel
+/**
+ * Model UserFavorite
+ * 
+ */
+export type UserFavorite = Prisma.UserFavoriteModel
+/**
+ * Model Admin
+ * 
+ */
+export type Admin = Prisma.AdminModel
+/**
+ * Model Announcement
+ * 
+ */
+export type Announcement = Prisma.AnnouncementModel
+/**
+ * Model AnnouncementImage
+ * 
+ */
+export type AnnouncementImage = Prisma.AnnouncementImageModel
+/**
+ * Model Organizer
+ * 
+ */
+export type Organizer = Prisma.OrganizerModel
 /**
  * Model Product
  * 

@@ -8,7 +8,16 @@
  * 🟢 You can import this file directly.
  */
 export type * from './models/User'
+export type * from './models/Notification'
+export type * from './models/UserNotificationStatus'
+export type * from './models/NotificationTemplate'
+export type * from './models/Review'
 export type * from './models/UserProvider'
+export type * from './models/UserFavorite'
+export type * from './models/Admin'
+export type * from './models/Announcement'
+export type * from './models/AnnouncementImage'
+export type * from './models/Organizer'
 export type * from './models/Product'
 export type * from './models/ProductVariant'
 export type * from './models/EventsProducts'

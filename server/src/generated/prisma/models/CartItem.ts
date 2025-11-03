@@ -515,14 +515,6 @@ export type EnumItemTypeFieldUpdateOperationsInput = {
   set?: $Enums.ItemType
 }
 
-export type NullableIntFieldUpdateOperationsInput = {
-  set?: number | null
-  increment?: number
-  decrement?: number
-  multiply?: number
-  divide?: number
-}
-
 export type CartItemCreateWithoutProduct_variantInput = {
   item_type: $Enums.ItemType
   ticket_type_id?: number | null

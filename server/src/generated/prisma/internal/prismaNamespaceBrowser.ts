@@ -49,7 +49,16 @@ export const AnyNull = runtime.objectEnumValues.instances.AnyNull
 
 export const ModelName = {
   User: 'User',
+  Notification: 'Notification',
+  UserNotificationStatus: 'UserNotificationStatus',
+  NotificationTemplate: 'NotificationTemplate',
+  Review: 'Review',
   UserProvider: 'UserProvider',
+  UserFavorite: 'UserFavorite',
+  Admin: 'Admin',
+  Announcement: 'Announcement',
+  AnnouncementImage: 'AnnouncementImage',
+  Organizer: 'Organizer',
   Product: 'Product',
   ProductVariant: 'ProductVariant',
   EventsProducts: 'EventsProducts',
@@ -84,16 +93,81 @@ export const UserScalarFieldEnum = {
   is_active: 'is_active',
   password_reset_token: 'password_reset_token',
   password_reset_expires: 'password_reset_expires',
-  created_at: 'created_at',
-  updated_at: 'updated_at',
   name: 'name',
   avatar: 'avatar',
   phone_number: 'phone_number',
   birth_date: 'birth_date',
-  address: 'address'
+  address: 'address',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const NotificationScalarFieldEnum = {
+  id: 'id',
+  template_id: 'template_id',
+  sender_admin_id: 'sender_admin_id',
+  target_type: 'target_type',
+  target_id: 'target_id',
+  type: 'type',
+  title: 'title',
+  message: 'message',
+  link_url: 'link_url',
+  sent_at: 'sent_at',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const UserNotificationStatusScalarFieldEnum = {
+  id: 'id',
+  notification_id: 'notification_id',
+  user_id: 'user_id',
+  is_read: 'is_read',
+  read_at: 'read_at',
+  is_deleted: 'is_deleted',
+  deleted_at: 'deleted_at',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type UserNotificationStatusScalarFieldEnum = (typeof UserNotificationStatusScalarFieldEnum)[keyof typeof UserNotificationStatusScalarFieldEnum]
+
+
+export const NotificationTemplateScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  message: 'message',
+  type: 'type',
+  target_role: 'target_role',
+  is_active: 'is_active',
+  scheduled_at: 'scheduled_at',
+  created_by: 'created_by',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type NotificationTemplateScalarFieldEnum = (typeof NotificationTemplateScalarFieldEnum)[keyof typeof NotificationTemplateScalarFieldEnum]
+
+
+export const ReviewScalarFieldEnum = {
+  id: 'id',
+  target_type: 'target_type',
+  target_id: 'target_id',
+  status: 'status',
+  reviewed_by: 'reviewed_by',
+  reviewed_at: 'reviewed_at',
+  reason: 'reason',
+  created_at: 'created_at',
+  updated_at: 'updated_at',
+  userId: 'userId'
+} as const
+
+export type ReviewScalarFieldEnum = (typeof ReviewScalarFieldEnum)[keyof typeof ReviewScalarFieldEnum]
 
 
 export const UserProviderScalarFieldEnum = {
@@ -110,6 +184,76 @@ export const UserProviderScalarFieldEnum = {
 } as const
 
 export type UserProviderScalarFieldEnum = (typeof UserProviderScalarFieldEnum)[keyof typeof UserProviderScalarFieldEnum]
+
+
+export const UserFavoriteScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  favoritable_id: 'favoritable_id',
+  favoritable_type: 'favoritable_type',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type UserFavoriteScalarFieldEnum = (typeof UserFavoriteScalarFieldEnum)[keyof typeof UserFavoriteScalarFieldEnum]
+
+
+export const AdminScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  password_hash: 'password_hash',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type AdminScalarFieldEnum = (typeof AdminScalarFieldEnum)[keyof typeof AdminScalarFieldEnum]
+
+
+export const AnnouncementScalarFieldEnum = {
+  id: 'id',
+  title: 'title',
+  subtitle: 'subtitle',
+  content: 'content',
+  link_url: 'link_url',
+  start_date: 'start_date',
+  end_date: 'end_date',
+  display_order: 'display_order',
+  is_active: 'is_active',
+  created_by: 'created_by',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type AnnouncementScalarFieldEnum = (typeof AnnouncementScalarFieldEnum)[keyof typeof AnnouncementScalarFieldEnum]
+
+
+export const AnnouncementImageScalarFieldEnum = {
+  id: 'id',
+  announcement_id: 'announcement_id',
+  image_url: 'image_url',
+  is_cover: 'is_cover',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type AnnouncementImageScalarFieldEnum = (typeof AnnouncementImageScalarFieldEnum)[keyof typeof AnnouncementImageScalarFieldEnum]
+
+
+export const OrganizerScalarFieldEnum = {
+  id: 'id',
+  user_id: 'user_id',
+  org_name: 'org_name',
+  org_address: 'org_address',
+  org_phone: 'org_phone',
+  org_tax_id: 'org_tax_id',
+  org_description: 'org_description',
+  is_verified: 'is_verified',
+  created_at: 'created_at',
+  updated_at: 'updated_at'
+} as const
+
+export type OrganizerScalarFieldEnum = (typeof OrganizerScalarFieldEnum)[keyof typeof OrganizerScalarFieldEnum]
 
 
 export const ProductScalarFieldEnum = {
@@ -246,6 +390,30 @@ export const UserOrderByRelevanceFieldEnum = {
 export type UserOrderByRelevanceFieldEnum = (typeof UserOrderByRelevanceFieldEnum)[keyof typeof UserOrderByRelevanceFieldEnum]
 
 
+export const NotificationOrderByRelevanceFieldEnum = {
+  title: 'title',
+  message: 'message',
+  link_url: 'link_url'
+} as const
+
+export type NotificationOrderByRelevanceFieldEnum = (typeof NotificationOrderByRelevanceFieldEnum)[keyof typeof NotificationOrderByRelevanceFieldEnum]
+
+
+export const NotificationTemplateOrderByRelevanceFieldEnum = {
+  title: 'title',
+  message: 'message'
+} as const
+
+export type NotificationTemplateOrderByRelevanceFieldEnum = (typeof NotificationTemplateOrderByRelevanceFieldEnum)[keyof typeof NotificationTemplateOrderByRelevanceFieldEnum]
+
+
+export const ReviewOrderByRelevanceFieldEnum = {
+  reason: 'reason'
+} as const
+
+export type ReviewOrderByRelevanceFieldEnum = (typeof ReviewOrderByRelevanceFieldEnum)[keyof typeof ReviewOrderByRelevanceFieldEnum]
+
+
 export const UserProviderOrderByRelevanceFieldEnum = {
   provider_id: 'provider_id',
   access_token: 'access_token',
@@ -253,6 +421,43 @@ export const UserProviderOrderByRelevanceFieldEnum = {
 } as const
 
 export type UserProviderOrderByRelevanceFieldEnum = (typeof UserProviderOrderByRelevanceFieldEnum)[keyof typeof UserProviderOrderByRelevanceFieldEnum]
+
+
+export const AdminOrderByRelevanceFieldEnum = {
+  name: 'name',
+  email: 'email',
+  password_hash: 'password_hash'
+} as const
+
+export type AdminOrderByRelevanceFieldEnum = (typeof AdminOrderByRelevanceFieldEnum)[keyof typeof AdminOrderByRelevanceFieldEnum]
+
+
+export const AnnouncementOrderByRelevanceFieldEnum = {
+  title: 'title',
+  subtitle: 'subtitle',
+  content: 'content',
+  link_url: 'link_url'
+} as const
+
+export type AnnouncementOrderByRelevanceFieldEnum = (typeof AnnouncementOrderByRelevanceFieldEnum)[keyof typeof AnnouncementOrderByRelevanceFieldEnum]
+
+
+export const AnnouncementImageOrderByRelevanceFieldEnum = {
+  image_url: 'image_url'
+} as const
+
+export type AnnouncementImageOrderByRelevanceFieldEnum = (typeof AnnouncementImageOrderByRelevanceFieldEnum)[keyof typeof AnnouncementImageOrderByRelevanceFieldEnum]
+
+
+export const OrganizerOrderByRelevanceFieldEnum = {
+  org_name: 'org_name',
+  org_address: 'org_address',
+  org_phone: 'org_phone',
+  org_tax_id: 'org_tax_id',
+  org_description: 'org_description'
+} as const
+
+export type OrganizerOrderByRelevanceFieldEnum = (typeof OrganizerOrderByRelevanceFieldEnum)[keyof typeof OrganizerOrderByRelevanceFieldEnum]
 
 
 export const ProductOrderByRelevanceFieldEnum = {

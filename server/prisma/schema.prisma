@@ -10,50 +10,236 @@ datasource db {
 
 // --- 模組一 : 登入註冊 (Users) ---
 
+// =======================
+// Users 主帳號表
+// =======================
 model User {
   id                     Int       @id @default(autoincrement())
   email                  String?   @unique
   password_hash          String?
-  role                   Role      @default(MEMBER)
+  role                   UserRole
   is_active              Boolean   @default(true)
   password_reset_token   String?
   password_reset_expires DateTime?
-  created_at             DateTime  @default(now())
-  updated_at             DateTime  @updatedAt
   name                   String
   avatar                 String?
   phone_number           String?
   birth_date             DateTime?
   address                String?
 
-  providers UserProvider[]
+  notifications UserNotificationStatus[]
+  reviews       Review[]
+  userProviders UserProvider[]
+  userFavorites UserFavorite[]
+
+  created_at DateTime   @default(now())
+  updated_at DateTime   @updatedAt
+  Organizer  Organizer?
 }
 
-model UserProvider {
-  id            Int      @id @default(autoincrement())
-  user_id       Int
-  provider      Provider
-  provider_id   String
-  access_token  String?
-  refresh_token String?
-  linked_at     DateTime @default(now())
-  is_primary    Boolean  @default(false)
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-
-  user User @relation(fields: [user_id], references: [id])
-
-  @@unique([provider, provider_id])
-}
-
-enum Role {
+enum UserRole {
   MEMBER
   ORGANIZER
 }
 
-enum Provider {
+// =======================
+// Notifications 通知表
+// =======================
+model Notification {
+  id              Int                    @id @default(autoincrement())
+  template_id     Int?
+  template        NotificationTemplate?  @relation(fields: [template_id], references: [id])
+  sender_admin_id Int?
+  target_type     NotificationTargetType
+  target_id       Int?
+  type            NotificationType
+  title           String
+  message         String
+  link_url        String?
+  sent_at         DateTime?
+  created_at      DateTime               @default(now())
+  updated_at      DateTime               @updatedAt
+
+  userStatuses UserNotificationStatus[]
+}
+
+enum NotificationTargetType {
+  USER
+  ORGANIZER
+  ALL
+}
+
+enum NotificationType {
+  system
+  event
+  transaction
+  review
+  announcement
+}
+
+// =======================
+// 使用者通知狀態
+// =======================
+model UserNotificationStatus {
+  id              Int          @id @default(autoincrement())
+  notification    Notification @relation(fields: [notification_id], references: [id])
+  notification_id Int
+  user            User         @relation(fields: [user_id], references: [id])
+  user_id         Int
+  is_read         Boolean      @default(false)
+  read_at         DateTime?
+  is_deleted      Boolean      @default(false)
+  deleted_at      DateTime?
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+}
+
+// =======================
+// 通知模板表
+// =======================
+model NotificationTemplate {
+  id           Int              @id @default(autoincrement())
+  title        String
+  message      String
+  type         NotificationType
+  target_role  UserRole
+  is_active    Boolean          @default(true)
+  scheduled_at DateTime?
+  created_by   Int?
+  created_at   DateTime         @default(now())
+  updated_at   DateTime         @updatedAt
+  Notification Notification[]
+}
+
+// =======================
+// Reviews 審核表
+// =======================
+model Review {
+  id          Int              @id @default(autoincrement())
+  target_type ReviewTargetType
+  target_id   Int?
+  status      ReviewStatus     @default(PENDING)
+  reviewed_by Int?
+  reviewed_at DateTime?
+  reason      String?
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+  User        User?            @relation(fields: [userId], references: [id])
+  userId      Int?
+}
+
+enum ReviewTargetType {
+  ORGANIZER
+  EVENT
+  USER_POST
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// =======================
+// 第三方登入綁定表
+// =======================
+model UserProvider {
+  id            Int          @id @default(autoincrement())
+  user          User         @relation(fields: [user_id], references: [id])
+  user_id       Int
+  provider      AuthProvider
+  provider_id   String
+  access_token  String?
+  refresh_token String?
+  linked_at     DateTime
+  is_primary    Boolean      @default(false)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  @@unique([provider, provider_id])
+}
+
+enum AuthProvider {
   GOOGLE
   FACEBOOK
+}
+
+// =======================
+// 收藏表
+// =======================
+model UserFavorite {
+  id               Int          @id @default(autoincrement())
+  user             User         @relation(fields: [user_id], references: [id])
+  user_id          Int
+  favoritable_id   Int
+  favoritable_type FavoriteType
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+}
+
+enum FavoriteType {
+  EVENT
+  USER_POST
+  ORGANIZER
+}
+
+// =======================
+// Admin 管理員表
+// =======================
+model Admin {
+  id            Int      @id @default(autoincrement())
+  name          String
+  email         String   @unique
+  password_hash String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
+// =======================
+// Announcements 系統公告表
+// =======================
+model Announcement {
+  id            Int      @id @default(autoincrement())
+  title         String
+  subtitle      String?
+  content       String
+  link_url      String?
+  start_date    DateTime
+  end_date      DateTime
+  display_order Int      @default(0)
+  is_active     Boolean  @default(true)
+  created_by    Int?
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  images AnnouncementImage[]
+}
+
+model AnnouncementImage {
+  id              Int          @id @default(autoincrement())
+  announcement    Announcement @relation(fields: [announcement_id], references: [id])
+  announcement_id Int
+  image_url       String
+  is_cover        Boolean      @default(false)
+  created_at      DateTime     @default(now())
+  updated_at      DateTime     @updatedAt
+}
+
+// =======================
+// Organizers 主辦方表
+// =======================
+model Organizer {
+  id              Int      @id @default(autoincrement())
+  user_id         Int?     @unique
+  user            User?    @relation(fields: [user_id], references: [id])
+  org_name        String?
+  org_address     String?
+  org_phone       String?
+  org_tax_id      String?
+  org_description String?
+  is_verified     Boolean  @default(false)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
 }
 
 // --- 模組三：相關的枚舉 (Enums) ---

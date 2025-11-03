@@ -38,7 +38,7 @@ export type UserProviderSumAggregateOutputType = {
 export type UserProviderMinAggregateOutputType = {
   id: number | null
   user_id: number | null
-  provider: $Enums.Provider | null
+  provider: $Enums.AuthProvider | null
   provider_id: string | null
   access_token: string | null
   refresh_token: string | null
@@ -51,7 +51,7 @@ export type UserProviderMinAggregateOutputType = {
 export type UserProviderMaxAggregateOutputType = {
   id: number | null
   user_id: number | null
-  provider: $Enums.Provider | null
+  provider: $Enums.AuthProvider | null
   provider_id: string | null
   access_token: string | null
   refresh_token: string | null
@@ -215,7 +215,7 @@ export type UserProviderGroupByArgs<ExtArgs extends runtime.Types.Extensions.Int
 export type UserProviderGroupByOutputType = {
   id: number
   user_id: number
-  provider: $Enums.Provider
+  provider: $Enums.AuthProvider
   provider_id: string
   access_token: string | null
   refresh_token: string | null
@@ -251,7 +251,7 @@ export type UserProviderWhereInput = {
   NOT?: Prisma.UserProviderWhereInput | Prisma.UserProviderWhereInput[]
   id?: Prisma.IntFilter<"UserProvider"> | number
   user_id?: Prisma.IntFilter<"UserProvider"> | number
-  provider?: Prisma.EnumProviderFilter<"UserProvider"> | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFilter<"UserProvider"> | $Enums.AuthProvider
   provider_id?: Prisma.StringFilter<"UserProvider"> | string
   access_token?: Prisma.StringNullableFilter<"UserProvider"> | string | null
   refresh_token?: Prisma.StringNullableFilter<"UserProvider"> | string | null
@@ -284,7 +284,7 @@ export type UserProviderWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.UserProviderWhereInput[]
   NOT?: Prisma.UserProviderWhereInput | Prisma.UserProviderWhereInput[]
   user_id?: Prisma.IntFilter<"UserProvider"> | number
-  provider?: Prisma.EnumProviderFilter<"UserProvider"> | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFilter<"UserProvider"> | $Enums.AuthProvider
   provider_id?: Prisma.StringFilter<"UserProvider"> | string
   access_token?: Prisma.StringNullableFilter<"UserProvider"> | string | null
   refresh_token?: Prisma.StringNullableFilter<"UserProvider"> | string | null
@@ -319,7 +319,7 @@ export type UserProviderScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserProviderScalarWhereWithAggregatesInput | Prisma.UserProviderScalarWhereWithAggregatesInput[]
   id?: Prisma.IntWithAggregatesFilter<"UserProvider"> | number
   user_id?: Prisma.IntWithAggregatesFilter<"UserProvider"> | number
-  provider?: Prisma.EnumProviderWithAggregatesFilter<"UserProvider"> | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderWithAggregatesFilter<"UserProvider"> | $Enums.AuthProvider
   provider_id?: Prisma.StringWithAggregatesFilter<"UserProvider"> | string
   access_token?: Prisma.StringNullableWithAggregatesFilter<"UserProvider"> | string | null
   refresh_token?: Prisma.StringNullableWithAggregatesFilter<"UserProvider"> | string | null
@@ -330,32 +330,32 @@ export type UserProviderScalarWhereWithAggregatesInput = {
 }
 
 export type UserProviderCreateInput = {
-  provider: $Enums.Provider
+  provider: $Enums.AuthProvider
   provider_id: string
   access_token?: string | null
   refresh_token?: string | null
-  linked_at?: Date | string
+  linked_at: Date | string
   is_primary?: boolean
   created_at?: Date | string
   updated_at?: Date | string
-  user: Prisma.UserCreateNestedOneWithoutProvidersInput
+  user: Prisma.UserCreateNestedOneWithoutUserProvidersInput
 }
 
 export type UserProviderUncheckedCreateInput = {
   id?: number
   user_id: number
-  provider: $Enums.Provider
+  provider: $Enums.AuthProvider
   provider_id: string
   access_token?: string | null
   refresh_token?: string | null
-  linked_at?: Date | string
+  linked_at: Date | string
   is_primary?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
 
 export type UserProviderUpdateInput = {
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFieldUpdateOperationsInput | $Enums.AuthProvider
   provider_id?: Prisma.StringFieldUpdateOperationsInput | string
   access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -363,13 +363,13 @@ export type UserProviderUpdateInput = {
   is_primary?: Prisma.BoolFieldUpdateOperationsInput | boolean
   created_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updated_at?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  user?: Prisma.UserUpdateOneRequiredWithoutProvidersNestedInput
+  user?: Prisma.UserUpdateOneRequiredWithoutUserProvidersNestedInput
 }
 
 export type UserProviderUncheckedUpdateInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   user_id?: Prisma.IntFieldUpdateOperationsInput | number
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFieldUpdateOperationsInput | $Enums.AuthProvider
   provider_id?: Prisma.StringFieldUpdateOperationsInput | string
   access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -382,18 +382,18 @@ export type UserProviderUncheckedUpdateInput = {
 export type UserProviderCreateManyInput = {
   id?: number
   user_id: number
-  provider: $Enums.Provider
+  provider: $Enums.AuthProvider
   provider_id: string
   access_token?: string | null
   refresh_token?: string | null
-  linked_at?: Date | string
+  linked_at: Date | string
   is_primary?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
 
 export type UserProviderUpdateManyMutationInput = {
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFieldUpdateOperationsInput | $Enums.AuthProvider
   provider_id?: Prisma.StringFieldUpdateOperationsInput | string
   access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -406,7 +406,7 @@ export type UserProviderUpdateManyMutationInput = {
 export type UserProviderUncheckedUpdateManyInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
   user_id?: Prisma.IntFieldUpdateOperationsInput | number
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFieldUpdateOperationsInput | $Enums.AuthProvider
   provider_id?: Prisma.StringFieldUpdateOperationsInput | string
   access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -433,7 +433,7 @@ export type UserProviderOrderByRelevanceInput = {
 }
 
 export type UserProviderProviderProvider_idCompoundUniqueInput = {
-  provider: $Enums.Provider
+  provider: $Enums.AuthProvider
   provider_id: string
 }
 
@@ -528,16 +528,16 @@ export type UserProviderUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.UserProviderScalarWhereInput | Prisma.UserProviderScalarWhereInput[]
 }
 
-export type EnumProviderFieldUpdateOperationsInput = {
-  set?: $Enums.Provider
+export type EnumAuthProviderFieldUpdateOperationsInput = {
+  set?: $Enums.AuthProvider
 }
 
 export type UserProviderCreateWithoutUserInput = {
-  provider: $Enums.Provider
+  provider: $Enums.AuthProvider
   provider_id: string
   access_token?: string | null
   refresh_token?: string | null
-  linked_at?: Date | string
+  linked_at: Date | string
   is_primary?: boolean
   created_at?: Date | string
   updated_at?: Date | string
@@ -545,11 +545,11 @@ export type UserProviderCreateWithoutUserInput = {
 
 export type UserProviderUncheckedCreateWithoutUserInput = {
   id?: number
-  provider: $Enums.Provider
+  provider: $Enums.AuthProvider
   provider_id: string
   access_token?: string | null
   refresh_token?: string | null
-  linked_at?: Date | string
+  linked_at: Date | string
   is_primary?: boolean
   created_at?: Date | string
   updated_at?: Date | string
@@ -587,7 +587,7 @@ export type UserProviderScalarWhereInput = {
   NOT?: Prisma.UserProviderScalarWhereInput | Prisma.UserProviderScalarWhereInput[]
   id?: Prisma.IntFilter<"UserProvider"> | number
   user_id?: Prisma.IntFilter<"UserProvider"> | number
-  provider?: Prisma.EnumProviderFilter<"UserProvider"> | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFilter<"UserProvider"> | $Enums.AuthProvider
   provider_id?: Prisma.StringFilter<"UserProvider"> | string
   access_token?: Prisma.StringNullableFilter<"UserProvider"> | string | null
   refresh_token?: Prisma.StringNullableFilter<"UserProvider"> | string | null
@@ -599,18 +599,18 @@ export type UserProviderScalarWhereInput = {
 
 export type UserProviderCreateManyUserInput = {
   id?: number
-  provider: $Enums.Provider
+  provider: $Enums.AuthProvider
   provider_id: string
   access_token?: string | null
   refresh_token?: string | null
-  linked_at?: Date | string
+  linked_at: Date | string
   is_primary?: boolean
   created_at?: Date | string
   updated_at?: Date | string
 }
 
 export type UserProviderUpdateWithoutUserInput = {
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFieldUpdateOperationsInput | $Enums.AuthProvider
   provider_id?: Prisma.StringFieldUpdateOperationsInput | string
   access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -622,7 +622,7 @@ export type UserProviderUpdateWithoutUserInput = {
 
 export type UserProviderUncheckedUpdateWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFieldUpdateOperationsInput | $Enums.AuthProvider
   provider_id?: Prisma.StringFieldUpdateOperationsInput | string
   access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -634,7 +634,7 @@ export type UserProviderUncheckedUpdateWithoutUserInput = {
 
 export type UserProviderUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.IntFieldUpdateOperationsInput | number
-  provider?: Prisma.EnumProviderFieldUpdateOperationsInput | $Enums.Provider
+  provider?: Prisma.EnumAuthProviderFieldUpdateOperationsInput | $Enums.AuthProvider
   provider_id?: Prisma.StringFieldUpdateOperationsInput | string
   access_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   refresh_token?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -688,7 +688,7 @@ export type $UserProviderPayload<ExtArgs extends runtime.Types.Extensions.Intern
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: number
     user_id: number
-    provider: $Enums.Provider
+    provider: $Enums.AuthProvider
     provider_id: string
     access_token: string | null
     refresh_token: string | null
@@ -1068,7 +1068,7 @@ export interface Prisma__UserProviderClient<T, Null = never, ExtArgs extends run
 export interface UserProviderFieldRefs {
   readonly id: Prisma.FieldRef<"UserProvider", 'Int'>
   readonly user_id: Prisma.FieldRef<"UserProvider", 'Int'>
-  readonly provider: Prisma.FieldRef<"UserProvider", 'Provider'>
+  readonly provider: Prisma.FieldRef<"UserProvider", 'AuthProvider'>
   readonly provider_id: Prisma.FieldRef<"UserProvider", 'String'>
   readonly access_token: Prisma.FieldRef<"UserProvider", 'String'>
   readonly refresh_token: Prisma.FieldRef<"UserProvider", 'String'>

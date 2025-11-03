@@ -8,20 +8,67 @@
 * 🟢 You can import this file directly.
 */
 
-export const Role = {
+export const UserRole = {
   MEMBER: 'MEMBER',
   ORGANIZER: 'ORGANIZER'
 } as const
 
-export type Role = (typeof Role)[keyof typeof Role]
+export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
 
-export const Provider = {
+export const NotificationTargetType = {
+  USER: 'USER',
+  ORGANIZER: 'ORGANIZER',
+  ALL: 'ALL'
+} as const
+
+export type NotificationTargetType = (typeof NotificationTargetType)[keyof typeof NotificationTargetType]
+
+
+export const NotificationType = {
+  system: 'system',
+  event: 'event',
+  transaction: 'transaction',
+  review: 'review',
+  announcement: 'announcement'
+} as const
+
+export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
+
+
+export const ReviewTargetType = {
+  ORGANIZER: 'ORGANIZER',
+  EVENT: 'EVENT',
+  USER_POST: 'USER_POST'
+} as const
+
+export type ReviewTargetType = (typeof ReviewTargetType)[keyof typeof ReviewTargetType]
+
+
+export const ReviewStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
+} as const
+
+export type ReviewStatus = (typeof ReviewStatus)[keyof typeof ReviewStatus]
+
+
+export const AuthProvider = {
   GOOGLE: 'GOOGLE',
   FACEBOOK: 'FACEBOOK'
 } as const
 
-export type Provider = (typeof Provider)[keyof typeof Provider]
+export type AuthProvider = (typeof AuthProvider)[keyof typeof AuthProvider]
+
+
+export const FavoriteType = {
+  EVENT: 'EVENT',
+  USER_POST: 'USER_POST',
+  ORGANIZER: 'ORGANIZER'
+} as const
+
+export type FavoriteType = (typeof FavoriteType)[keyof typeof FavoriteType]
 
 
 export const OrderStatus = {
