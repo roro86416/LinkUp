@@ -194,3 +194,84 @@ model TicketRegistration {
 
   @@map("Ticket_Registration") // 對應 CSV 表名
 }
+
+model contact_tags {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model post_category {
+  id       Int        @id @default(autoincrement())
+  name     String
+  userpost userpost[]
+}
+
+model post_comments {
+  id         Int                  @id @default(autoincrement())
+  content    String
+  rating     post_comments_rating
+  created_at DateTime
+  post_id    Int
+  authorId   Int
+  users      users                @relation(fields: [authorId], references: [id])
+  userpost   userpost             @relation(fields: [post_id], references: [id])
+
+  @@index([authorId], map: "post_comments_authorId_fkey")
+  @@index([post_id], map: "post_comments_post_id_fkey")
+}
+
+model post_images {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  imageUrl  String   @db.VarChar(255)
+  isCover   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userpost  userpost @relation(fields: [postId], references: [id])
+
+  @@index([postId], map: "post_images_postId_fkey")
+}
+
+model post_tags {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model userpost {
+  id            Int             @id @default(autoincrement())
+  authorId      Int
+  title         String          @db.VarChar(150)
+  content       String
+  categoryId    Int
+  status        userpost_status @default(pending)
+  createdAt     DateTime        @default(now())
+  publishedAt   DateTime?
+  articleId     Int?
+  post_comments post_comments[]
+  post_images   post_images[]
+  users         users           @relation(fields: [authorId], references: [id], map: "UserPost_authorId_fkey")
+  post_category post_category   @relation(fields: [categoryId], references: [id], map: "UserPost_categoryId_fkey")
+
+  @@index([authorId], map: "UserPost_authorId_fkey")
+  @@index([categoryId], map: "UserPost_categoryId_fkey")
+}
+
+model users {
+  id            Int             @id @default(autoincrement())
+  name          String?
+  post_comments post_comments[]
+  userpost      userpost[]
+}
+
+enum post_comments_rating {
+  one
+  two
+  three
+  four
+  five
+}
+
+enum userpost_status {
+  pending
+  approved
+  rejected
+}
