@@ -18,6 +18,19 @@ export const createProductSchema = z.object({
     base_price: z.number().positive("價格必須大於 0"),
     description: z.string().optional(),
     image_url: z.string().optional(),
+    is_published: z.boolean().default(false),
     variants: z.array(variantSchema),
   }),
 });
+
+export const updateProductSchema = z.object({
+  body: z.object({
+    name: z.string().min(1, "商品名稱不能為空").optional(),
+    base_price: z.number().positive("價格必須大於 0").optional(),
+    description: z.string().optional(),
+    image_url: z.string().optional(),
+    variants: z.array(variantSchema).optional(),
+    is_published: z.boolean().optional(),
+  }),
+});
+export type UpdateProductBody = z.infer<typeof updateProductSchema>["body"];
