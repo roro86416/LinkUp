@@ -66,34 +66,33 @@ router.put(
     try {
       const id = parseInt(req.params.id);
       const { variants, ...productData } = req.body as UpdateProductBody;
-      const updatedProduct = await prisma.product.update({
-        where: { id: id },
-        data: productData,
-      });
 
-      await prisma.productVariant.deleteMany({
-        where: {
-          product_id: id,
-        },
-      });
-
-      const variantsData = (variants || []).map((variant) => ({
-        ...variants,
-        product_id: id,
-      }));
-
-      await prisma.$transaction([
-        prisma.productVariant.deleteMany({
-          where: { product_id: id },
-        }),
-        prisma.productVariant.createMany({
-          data: variantsData,
-        }),
-      ]),
-        res.json({
-          status: "success",
-          data: updatedProduct,
+      const result = await prisma.$transaction(async (tx) => {
+        const updatedProduct = await tx.product.update({
+          where: { id: id },
+          data: productData,
         });
+        if (variants) {
+          const variantsData = (variants || []).map((variants) => ({
+            ...variants,
+            product_id: id,
+          }));
+          await tx.productVariant.deleteMany({
+            where: {
+              product_id: id,
+            },
+          });
+          await tx.productVariant.createMany({
+            data: variantsData,
+          });
+        }
+        return updatedProduct;
+      });
+
+      res.json({
+        status: "success",
+        data: result,
+      });
     } catch (error) {
       const e = error as Error;
       res.status(500).json({

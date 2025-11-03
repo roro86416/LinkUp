@@ -40,7 +40,7 @@ model Product {
   description String?  @db.Text /// 商品描述
   base_price  Decimal  @db.Decimal(10, 2) /// 商品基本價格
   image_url   String?  @db.VarChar(255) /// 商品圖片
-
+  is_published Boolean  @default(false)
   // 關聯：一個商品有多個規格
   variants ProductVariant[]
   
