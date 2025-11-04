@@ -237,162 +237,93 @@ model TicketRegistration {
   id            Int       @id @default(autoincrement())
   order_item_id Int       @unique
   order_item    OrderItem @relation(fields: [order_item_id], references: [id], onDelete: Cascade)
-  
-  ticket_id     Int?      @unique
-  ticket        Ticket?   @relation(fields: [ticket_id], references: [id])
+  // (未來關聯：票券)
+  ticket_id     Int?   @unique
+  // (報名者資料，來自 CSV)
+  name          String @db.VarChar(100)
+  email         String @db.VarChar(255)
+  phone         String @db.VarChar(20)
 
-  name  String @db.VarChar(100)
-  email String @db.VarChar(255)
-  phone String @db.VarChar(20)
-
-  @@map("Ticket_Registration")
+  @@map("Ticket_Registration") // 對應 CSV 表名
 }
 
-
-// -------------------------------------------------
-// 模組二 & 四
-// -------------------------------------------------
-
-model Event {
-  id                Int      @id @default(autoincrement())
-  title             String   @db.VarChar(255)
-  subtitle          String?  @db.VarChar(255)
-  description       String?  @db.Text
-  cover_image       String   @db.VarChar(255)
-  start_time        DateTime
-  end_time          DateTime
-  location_name     String?  @db.VarChar(100)
-  address           String?  @db.VarChar(255)
-  latitude          Decimal? @db.Decimal(10, 8)
-  longitude         Decimal? @db.Decimal(11, 8)
-  status            EventStatus
-  event_type        EventType
-  online_event_url  String?  @db.VarChar(255)
-  created_at        DateTime @default(now())
-  updated_at        DateTime @updatedAt
-
-  organizer_id      Int
-  organizer         User   @relation("OrganizedBy", fields: [organizer_id], references: [id])
-
-  category_id       Int?
-  category          Category? @relation(fields: [category_id], references: [id])
-
-  tags              Tag[] @relation("EventTags")
-  
-  guests            EventGuest[]
-  attachments       EventAttachment[]
-  coupons           Coupon[]
-  products          EventsProducts[]
-  ticketTypes       TicketType[]
-
-  @@map("events")
-  Review Review[]
+model contact_tags {
+  id   Int    @id @default(autoincrement())
+  name String
 }
 
-model EventGuest {
-  id        Int     @id @default(autoincrement())
-  name      String  @db.VarChar(100)
-  bio       String? @db.Text
-  photo_url String? @db.VarChar(255)
-  
-  event_id  Int
-  event     Event   @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  
-  @@map("event_guests")
+model post_category {
+  id       Int        @id @default(autoincrement())
+  name     String
+  userpost userpost[]
 }
 
-model EventAttachment {
-  id        Int    @id @default(autoincrement())
-  file_name String @db.VarChar(255)
-  file_url  String @db.VarChar(255)
+model post_comments {
+  id         Int                  @id @default(autoincrement())
+  content    String
+  rating     post_comments_rating
+  created_at DateTime
+  post_id    Int
+  authorId   Int
+  users      users                @relation(fields: [authorId], references: [id])
+  userpost   userpost             @relation(fields: [post_id], references: [id])
 
-  event_id  Int
-  event     Event  @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  
-  @@map("event_attachments")
+  @@index([authorId], map: "post_comments_authorId_fkey")
+  @@index([post_id], map: "post_comments_post_id_fkey")
 }
 
-model Coupon {
-  id             Int          @id @default(autoincrement())
-  code           String       @unique @db.VarChar(50)
-  discount_type  DiscountType
-  value          Decimal      @db.Decimal(10, 2)
-  expires_at     DateTime
-  usage_limit    Int
-  used_count     Int          @default(0)
-
-  event_id       Int?
-  event          Event?       @relation(fields: [event_id], references: [id], onDelete: Cascade)
-  
-  orders         Order[]
-
-  @@map("coupons")
-}
-
-model TicketType {
-  id                Int       @id @default(autoincrement())
-  name              String    @db.VarChar(100)
-  price             Decimal   @db.Decimal(10, 2)
-  total_quantity    Int
-  sale_start_time   DateTime
-  sale_end_time     DateTime
-
-  event_id          Int
-  event             Event     @relation(fields: [event_id], references: [id], onDelete: Cascade)
-
-  cart_items        CartItem[]
-  order_items       OrderItem[]
-  
-  tickets           Ticket[]
-
-  @@map("ticket_types")
-}
-
-model Ticket {
-  id            Int       @id @default(autoincrement())
-  qr_code_data  String    @unique @db.VarChar(255)
-  status        TicketStatus
-  issued_at     DateTime  @default(now())
-
-  ticket_type_id Int
-  ticket_type   TicketType @relation(fields: [ticket_type_id], references: [id])
-
-  owner_id      Int
-  owner         User      @relation("OwnedBy", fields: [owner_id], references: [id])
-  
-  check_ins     CheckIn[]
-
-  ticket_registration TicketRegistration?
-
-  @@map("tickets")
-}
-
-model CheckIn {
-  id          Int       @id @default(autoincrement())
-  scan_time   DateTime?
-  status      CheckInStatus
-  device_info String?   @db.VarChar(255)
-
-  ticket_id   Int
-  ticket      Ticket    @relation(fields: [ticket_id], references: [id])
-
-  scanner_id  Int
-  scanner     User      @relation("ScannedBy", fields: [scanner_id], references: [id])
-  
-  @@map("check_ins")
-}
-
-model Review {
+model post_images {
   id        Int      @id @default(autoincrement())
-  rating    Int      @db.TinyInt
-  comment   String?  @db.Text
+  postId    Int
+  imageUrl  String   @db.VarChar(255)
+  isCover   Boolean  @default(false)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  userpost  userpost @relation(fields: [postId], references: [id])
 
-  // 關聯
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
+  @@index([postId], map: "post_images_postId_fkey")
+}
 
-  event     Event    @relation(fields: [eventId], references: [id])
-  eventId   Int
+model post_tags {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model userpost {
+  id            Int             @id @default(autoincrement())
+  authorId      Int
+  title         String          @db.VarChar(150)
+  content       String
+  categoryId    Int
+  status        userpost_status @default(pending)
+  createdAt     DateTime        @default(now())
+  publishedAt   DateTime?
+  articleId     Int?
+  post_comments post_comments[]
+  post_images   post_images[]
+  users         users           @relation(fields: [authorId], references: [id], map: "UserPost_authorId_fkey")
+  post_category post_category   @relation(fields: [categoryId], references: [id], map: "UserPost_categoryId_fkey")
+
+  @@index([authorId], map: "UserPost_authorId_fkey")
+  @@index([categoryId], map: "UserPost_categoryId_fkey")
+}
+
+model users {
+  id            Int             @id @default(autoincrement())
+  name          String?
+  post_comments post_comments[]
+  userpost      userpost[]
+}
+
+enum post_comments_rating {
+  one
+  two
+  three
+  four
+  five
+}
+
+enum userpost_status {
+  pending
+  approved
+  rejected
 }
