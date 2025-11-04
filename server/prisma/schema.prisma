@@ -1,74 +1,47 @@
-generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
-}
-
+// 1. 設定資料庫連線
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-// --- 模組一 : 登入註冊 (Users) ---
-
-// =======================
-// Users 主帳號表
-// =======================
-model User {
-  id                     Int       @id @default(autoincrement())
-  email                  String?   @unique
-  password_hash          String?
-  role                   UserRole
-  is_active              Boolean   @default(true)
-  password_reset_token   String?
-  password_reset_expires DateTime?
-  name                   String
-  avatar                 String?
-  phone_number           String?
-  birth_date             DateTime?
-  address                String?
-
-  notifications UserNotificationStatus[]
-  reviews       Review[]
-  userProviders UserProvider[]
-  userFavorites UserFavorite[]
-
-  created_at DateTime   @default(now())
-  updated_at DateTime   @updatedAt
-  Organizer  Organizer?
+// 2. 設定 Prisma Client 產生器
+generator client {
+  provider = "prisma-client-js"
 }
 
+// --- Enums (枚舉/類型) ---
+// (所有從 CSV 檔案中收集到的 Enum)
+
+/// 模組一：使用者角色
 enum UserRole {
   MEMBER
   ORGANIZER
 }
 
-// =======================
-// Notifications 通知表
-// =======================
-model Notification {
-  id              Int                    @id @default(autoincrement())
-  template_id     Int?
-  template        NotificationTemplate?  @relation(fields: [template_id], references: [id])
-  sender_admin_id Int?
-  target_type     NotificationTargetType
-  target_id       Int?
-  type            NotificationType
-  title           String
-  message         String
-  link_url        String?
-  sent_at         DateTime?
-  created_at      DateTime               @default(now())
-  updated_at      DateTime               @updatedAt
-
-  userStatuses UserNotificationStatus[]
+/// 模組一：第三方登入
+enum ProviderType {
+  GOOGLE
+  GITHUB
+  FACEBOOK
+  LINE
+  APPLE
 }
 
-enum NotificationTargetType {
-  USER
+/// 模組一：收藏類型
+enum FavoritableType {
+  EVENT
+  USER_POST
   ORGANIZER
-  ALL
 }
 
+/// 模組一：審核狀態
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+/// 模組一：通知類型
 enum NotificationType {
   system
   event
@@ -77,434 +50,694 @@ enum NotificationType {
   announcement
 }
 
-// =======================
-// 使用者通知狀態
-// =======================
-model UserNotificationStatus {
-  id              Int          @id @default(autoincrement())
-  notification    Notification @relation(fields: [notification_id], references: [id])
-  notification_id Int
-  user            User         @relation(fields: [user_id], references: [id])
-  user_id         Int
-  is_read         Boolean      @default(false)
-  read_at         DateTime?
-  is_deleted      Boolean      @default(false)
-  deleted_at      DateTime?
-  created_at      DateTime     @default(now())
-  updated_at      DateTime     @updatedAt
-}
-
-// =======================
-// 通知模板表
-// =======================
-model NotificationTemplate {
-  id           Int              @id @default(autoincrement())
-  title        String
-  message      String
-  type         NotificationType
-  target_role  UserRole
-  is_active    Boolean          @default(true)
-  scheduled_at DateTime?
-  created_by   Int?
-  created_at   DateTime         @default(now())
-  updated_at   DateTime         @updatedAt
-  Notification Notification[]
-}
-
-// =======================
-// Reviews 審核表
-// =======================
-model Review {
-  id          Int              @id @default(autoincrement())
-  target_type ReviewTargetType
-  target_id   Int?
-  status      ReviewStatus     @default(PENDING)
-  reviewed_by Int?
-  reviewed_at DateTime?
-  reason      String?
-  created_at  DateTime         @default(now())
-  updated_at  DateTime         @updatedAt
-  User        User?            @relation(fields: [userId], references: [id])
-  userId      Int?
-}
-
-enum ReviewTargetType {
+/// 模組一：通知對象
+enum NotificationTargetType {
+  USER
   ORGANIZER
-  EVENT
-  USER_POST
+  ALL
 }
 
-enum ReviewStatus {
+/// 模組二：活動狀態
+enum EventStatus_M2 {
   PENDING
   APPROVED
   REJECTED
 }
 
-// =======================
-// 第三方登入綁定表
-// =======================
-model UserProvider {
-  id            Int          @id @default(autoincrement())
-  user          User         @relation(fields: [user_id], references: [id])
-  user_id       Int
-  provider      AuthProvider
-  provider_id   String
-  access_token  String?
-  refresh_token String?
-  linked_at     DateTime
-  is_primary    Boolean      @default(false)
-  created_at    DateTime     @default(now())
-  updated_at    DateTime     @updatedAt
-
-  @@unique([provider, provider_id])
+/// 模組二：活動類型
+enum EventType {
+  OFFLINE
+  ONLINE
 }
 
-enum AuthProvider {
-  GOOGLE
-  FACEBOOK
+/// 模組二：嘉賓狀態
+enum GuestStatus {
+  INVITED
+  ATTENDING
+  DECLINED
 }
 
-// =======================
-// 收藏表
-// =======================
-model UserFavorite {
-  id               Int          @id @default(autoincrement())
-  user             User         @relation(fields: [user_id], references: [id])
-  user_id          Int
-  favoritable_id   Int
-  favoritable_type FavoriteType
-  created_at       DateTime     @default(now())
-  updated_at       DateTime     @updatedAt
+/// 模組二：優惠券類型
+enum CouponType {
+  PERCENTAGE
+  FIXED_AMOUNT
 }
 
-enum FavoriteType {
-  EVENT
-  USER_POST
-  ORGANIZER
+/// 模組二：優惠券狀態
+enum CouponStatus {
+  ACTIVE
+  INACTIVE
+  EXPIRED
 }
 
-// =======================
-// Admin 管理員表
-// =======================
-model Admin {
-  id            Int      @id @default(autoincrement())
-  name          String
-  email         String   @unique
-  password_hash String
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-}
-
-// =======================
-// Announcements 系統公告表
-// =======================
-model Announcement {
-  id            Int      @id @default(autoincrement())
-  title         String
-  subtitle      String?
-  content       String
-  link_url      String?
-  start_date    DateTime
-  end_date      DateTime
-  display_order Int      @default(0)
-  is_active     Boolean  @default(true)
-  created_by    Int?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-
-  images AnnouncementImage[]
-}
-
-model AnnouncementImage {
-  id              Int          @id @default(autoincrement())
-  announcement    Announcement @relation(fields: [announcement_id], references: [id])
-  announcement_id Int
-  image_url       String
-  is_cover        Boolean      @default(false)
-  created_at      DateTime     @default(now())
-  updated_at      DateTime     @updatedAt
-}
-
-// =======================
-// Organizers 主辦方表
-// =======================
-model Organizer {
-  id              Int      @id @default(autoincrement())
-  user_id         Int?     @unique
-  user            User?    @relation(fields: [user_id], references: [id])
-  org_name        String?
-  org_address     String?
-  org_phone       String?
-  org_tax_id      String?
-  org_description String?
-  is_verified     Boolean  @default(false)
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-}
-
-// --- 模組三：相關的枚舉 (Enums) ---
-
-// 訂單狀態 (來自 Order 表)
-enum OrderStatus {
-  pending // 待付款
-  paid // 已付款
-  shipped // (商品) 已出貨
-  completed // (流程) 已完成
-  cancelled // 已取消
-}
-
+/// 模組三 (您的)：購物車項目類型
 enum ItemType {
-  ticket_types // 票券
-  products // 商品
+  ticket_types // 來自模組二的「票種」表
+  products     // 來自模組三的「商品」表
 }
 
+/// 模組三 (您的)：訂單狀態
+enum OrderStatus {
+  pending
+  paid
+  shipped
+  completed
+  cancelled
+}
+
+/// 模組三 (您的)：運送方式
 enum DeliveryMethod {
-  shipping // 宅配
-  on_site_pickup // 現場取貨
+  shipping
+  on_site_pickup
 }
 
-// --- 1. 商城 (Products) ---
-// 商品
-model Product {
-  id          Int     @id @default(autoincrement())
-  name        String  @db.VarChar(255) /// 商品名稱
-  description String? @db.Text /// 商品描述
-  base_price  Decimal @db.Decimal(10, 2) /// 商品基本價格
-  image_url   String? @db.VarChar(255) /// 商品圖片
-
-  // 關聯：一個商品有多個規格
-  variants ProductVariant[]
-
-  // 關聯：活動-商品 多對多
-  events_products EventsProducts[]
-
-  @@map("products") // 對應 CSV 表名
+/// 模組三 (您的)：交易狀態
+enum TransactionStatus {
+  pending
+  succeeded
+  failed
 }
 
-model ProductVariant {
-  id         Int     @id @default(autoincrement()) /// 規格 ID
-  product_id Int
-  product    Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-
-  sku           String? @unique @db.VarChar(100)
-  option1_name  String? @db.VarChar(50)
-  option1_value String? @db.VarChar(50)
-  option2_name  String? @db.VarChar(50)
-  option2_value String? @db.VarChar(50)
-
-  price_offset   Decimal @default(0) @db.Decimal(10, 2)
-  stock_quantity Int     @default(0) @map("stock") // CSV 中欄位名為 stock
-
-  // 關聯：此規格在哪些購物車項目中
-  cart_items  CartItem[]
-  // 關聯：此規格在哪些訂單項目中
-  order_items OrderItem[]
-
-  @@map("ProductVariant") // 對應 CSV 表名
-}
-
-model EventsProducts {
-  event_id   Int
-  product_id Int
-
-  // (未來關聯：活動)
-  // event   Event   @relation(fields: [event_id], references: [id])
-  // (關聯：商品)
-  product Product @relation(fields: [product_id], references: [id])
-
-  @@id([event_id, product_id]) // 複合主鍵
-  @@map("events_products") // 對應 CSV 表名
-}
-
-
-// --- 2. 購物車 (Carts) ---
-
-model Cart {
-  id         Int       @id @default(autoincrement())
-  user_id    Int       @unique
-  updated_at DateTime? @updatedAt
-  items      CartItem[]
-
-  // 關聯：一個購物車有多個項目
-  items CartItem[]
-
-  // (未來關聯：使用者)
-  // user    User    @relation(fields: [user_id], references: [id])
-
-  @@map("Cart") // 對應 CSV 表名
-}
-
-model CartItem {
-  id           Int      @id @default(autoincrement())
-  cart_id      Int
-  cart         Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
-  item_type    ItemType
-  quantity     Int
-  added_at     DateTime @default(now())
-
-  ticket_type_id Int?
-  ticket_type    TicketType? @relation(fields: [ticket_type_id], references: [id])
-
-  product_variant_id Int?
-  product_variant    ProductVariant? @relation(fields: [product_variant_id], references: [id])
-
-  @@map("CartItem")
-}
-
-// -------------------------------------------------
-// 模組三：結帳 (Orders)
-// -------------------------------------------------
-model Order {
-  id           Int    @id @default(autoincrement())
-  order_number String @unique @db.VarChar(50)
-  user_id      Int // (未來關聯 User(id))
-
-  subtotal        Decimal @db.Decimal(10, 2)
-  discount_amount Decimal @default(0) @db.Decimal(10, 2)
-  total_amount    Decimal @db.Decimal(10, 2)
-
-  coupon_id   Int? // (未來關聯 Coupon(id))
-  coupon_code String? @db.VarChar(50)
-
-  status OrderStatus @default(pending)
-
-  billing_name    String  @db.VarChar(100)
-  billing_phone   String  @db.VarChar(20)
-  billing_address String? @db.Text
-
-  payment_method String?  @db.VarChar(50)
-  created_at     DateTime @default(now())
-  expires_at     DateTime
-
-  // 關聯：一個訂單有多個項目
-  items OrderItem[]
-
-  // (未來關聯：使用者)
-  // user          User     @relation(fields: [user_id], references: [id])
-
-  @@map("Order") // 對應 CSV 表名
-}
-
-model OrderItem {
-  id                  Int             @id @default(autoincrement())
-  order_id            Int
-  order               Order           @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  item_type           ItemType
-  // (未來關聯：票種)
-  ticket_type_id      Int?
-  // (關聯：商品規格)
-  product_variant_id  Int?
-  product_variant     ProductVariant? @relation(fields: [product_variant_id], references: [id])
-  // (快照)
-  item_name           String          @db.VarChar(255)
-  variant_description String?         @db.VarChar(100)
-  quantity            Int
-  unit_price          Decimal         @db.Decimal(10, 2)
-  delivery_method     DeliveryMethod?
-
-  ticket_type_id Int?
-  ticket_type    TicketType? @relation(fields: [ticket_type_id], references: [id])
-
-  product_variant_id Int?
-  product_variant    ProductVariant? @relation(fields: [product_variant_id], references: [id])
-
-  ticket_registration TicketRegistration?
-
-  @@map("OrderItem")
-}
-
-model TicketRegistration {
-  id            Int       @id @default(autoincrement())
-  order_item_id Int       @unique // (重要) 關聯到訂單項目 (一對一)
-  order_item    OrderItem @relation(fields: [order_item_id], references: [id], onDelete: Cascade)
-  // (未來關聯：票券)
-  ticket_id     Int?      @unique
-  // (報名者資料，來自 CSV)
-  name          String    @db.VarChar(100)
-  email         String    @db.VarChar(255)
-  phone         String    @db.VarChar(20)
-
-  @@map("Ticket_Registration") // 對應 CSV 表名
-}
-
-model contact_tags {
-  id   Int    @id @default(autoincrement())
-  name String
-}
-
-model post_category {
-  id       Int        @id @default(autoincrement())
-  name     String
-  userpost userpost[]
-}
-
-model post_comments {
-  id         Int                  @id @default(autoincrement())
-  content    String
-  rating     post_comments_rating
-  created_at DateTime
-  post_id    Int
-  authorId   Int
-  users      users                @relation(fields: [authorId], references: [id])
-  userpost   userpost             @relation(fields: [post_id], references: [id])
-
-  @@index([authorId], map: "post_comments_authorId_fkey")
-  @@index([post_id], map: "post_comments_post_id_fkey")
-}
-
-model post_images {
-  id        Int      @id @default(autoincrement())
-  postId    Int
-  imageUrl  String   @db.VarChar(255)
-  isCover   Boolean  @default(false)
-  createdAt DateTime @default(now())
-  userpost  userpost @relation(fields: [postId], references: [id])
-
-  @@index([postId], map: "post_images_postId_fkey")
-}
-
-model post_tags {
-  id   Int    @id @default(autoincrement())
-  name String
-}
-
-model userpost {
-  id            Int             @id @default(autoincrement())
-  authorId      Int
-  title         String          @db.VarChar(150)
-  content       String
-  categoryId    Int
-  status        userpost_status @default(pending)
-  createdAt     DateTime        @default(now())
-  publishedAt   DateTime?
-  articleId     Int?
-  post_comments post_comments[]
-  post_images   post_images[]
-  users         users           @relation(fields: [authorId], references: [id], map: "UserPost_authorId_fkey")
-  post_category post_category   @relation(fields: [categoryId], references: [id], map: "UserPost_categoryId_fkey")
-
-  @@index([authorId], map: "UserPost_authorId_fkey")
-  @@index([categoryId], map: "UserPost_categoryId_fkey")
-}
-
-model users {
-  id            Int             @id @default(autoincrement())
-  name          String?
-  post_comments post_comments[]
-  userpost      userpost[]
-}
-
-enum post_comments_rating {
-  one
-  two
-  three
-  four
-  five
-}
-
-enum userpost_status {
+/// 模組五：貼文狀態
+enum PostStatus {
   pending
   approved
   rejected
 }
 
+/// (來自您最新定義)：報到狀態
+enum CheckInStatus {
+  SUCCESS
+  DUPLICATE
+  INVALID
+}
+
+/// (FIX ✅) 補上遺失的 Enum
+enum TicketStatus {
+  VALID
+  USED
+  EXPIRED
+  CANCELLED
+}
+
+
+// --- 模組一：使用者與平台整合 (詹思蘋) ---
+
+/// 模組一：帳號主表
+model users {
+  id                     Int       @id @default(autoincrement())
+  email                  String    @unique @db.VarChar(255)
+  password_hash          String?   @db.VarChar(255)
+  role                   UserRole  @default(MEMBER)
+  is_active              Boolean   @default(true)
+  password_reset_token   String?   @db.VarChar(255)
+  password_reset_expires DateTime?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+
+  // 關聯 (反向)
+  user_providers    user_providers[]
+  user_profile      user_profiles?
+  notifications     notifications[]
+  user_favorites    user_favorites[]
+  events            events[] // 作為主辦方 (organizer)
+  orders            orders[] // 作為購買者 (user)
+  event_ratings     event_ratings[]
+  event_guests      event_guests[]
+  scanner_check_ins check_ins[] // 作為掃描人員
+  user_posts        user_posts[]
+  organizer_posts   organizer_posts[]
+  post_reviews      post_reviews[]
+  review_logs_admin review_logs[] @relation("Reviewer")
+
+  // (FIX ✅) 補上 `carts` 遺失的反向關聯
+  cart carts?
+
+  // (FIX ✅) 補上 `Ticket_Registration` 遺失的反向關聯
+  registrations Ticket_Registration[]
+}
+
+/// 模組一：第三方登入綁定表
+model user_providers {
+  id            Int          @id @default(autoincrement())
+  user_id       Int
+  provider      ProviderType
+  provider_id   String       @db.VarChar(255)
+  access_token  String?      @db.Text
+  refresh_token String?      @db.Text
+  linked_at     DateTime     @default(now())
+  is_primary    Boolean      @default(false)
+
+  // 關聯
+  user users @relation(fields: [user_id], references: [id])
+
+  @@unique([provider, provider_id])
+}
+
+/// 模組一：個人資料（含主辦方資料）
+model user_profiles {
+  user_id               Int       @id /// PK & FK → users.id
+  name                  String?   @db.VarChar(255)
+  avatar                String?   @db.VarChar(255)
+  phone_number          String?   @db.VarChar(20)
+  birth_date            DateTime? @db.Date
+  address               String?   @db.Text
+  org_name              String?   @db.VarChar(255)
+  org_address           String?   @db.Text
+  org_phone             String?   @db.VarChar(20)
+  org_tax_id            String?   @db.VarChar(20)
+  org_description       String?   @db.Text
+  is_organizer_verified Boolean   @default(false)
+  created_at            DateTime  @default(now())
+  updated_at            DateTime  @updatedAt
+
+  // 關聯
+  user users @relation(fields: [user_id], references: [id])
+}
+
+/// 模組一：通知中心 系統通知
+model notifications {
+  id              Int                  @id @default(autoincrement())
+  template_id     Int? /// (CSV 中有，但未提供 templates 表)
+  sender_admin_id Int?
+  target_type     NotificationTargetType @default(USER)
+  target_id       Int? /// (CSV 中有，但 FK 不明確)
+  type            NotificationType
+  user_id         Int /// 通知接收者
+  title           String               @db.VarChar(100)
+  message         String               @db.Text
+  is_read         Boolean              @default(false)
+  link_url        String?              @db.VarChar(255)
+  created_at      DateTime             @default(now())
+  updated_at      DateTime             @updatedAt
+
+  // 關聯
+  user  users  @relation(fields: [user_id], references: [id])
+  admin admins? @relation(fields: [sender_admin_id], references: [id])
+}
+
+/// 模組一：活動 / 主辦方收藏
+model user_favorites {
+  id               Int             @id @default(autoincrement())
+  user_id          Int
+  favoritable_id   Int /// 被收藏項目 ID (可能是 events.id 或 users.id)
+  favoritable_type FavoritableType /// 收藏類型 (EVENT 或 ORGANIZER)
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+
+  // 關聯
+  user users @relation(fields: [user_id], references: [id])
+  // (注意: favoritable_id 是多態關聯，Prisma 中需要手動處理邏輯)
+}
+
+/// 模組一：管理員表
+model admins {
+  id            Int      @id @default(autoincrement())
+  name          String   @db.VarChar(255)
+  email         String   @unique @db.VarChar(255)
+  password_hash String   @db.VarChar(255)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // 關聯 (反向)
+  announcements announcements[]
+  reviews       reviews[]
+  notifications notifications[]
+}
+
+/// 模組一：系統公告表(平台公告 / 宣傳)
+model announcements {
+  id            Int       @id @default(autoincrement())
+  title         String    @db.VarChar(255)
+  subtitle      String?   @db.VarChar(255)
+  content       String    @db.Text
+  link_url      String?   @db.VarChar(500)
+  start_date    DateTime
+  end_date      DateTime?
+  display_order Int?      @default(0)
+  is_active     Boolean   @default(true)
+  created_by    Int? /// FK → admins.id
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  // 關聯
+  admin admins? @relation(fields: [created_by], references: [id])
+}
+
+/// 模組一：審核表
+model reviews {
+  id          Int          @id @default(autoincrement())
+  target_type String       @db.VarChar(50) /// ENUM('ORGANIZER','EVENT','USER_POST')
+  target_id   Int
+  status      ReviewStatus @default(PENDING)
+  reviewed_by Int? /// FK → admins.id
+  reason      String?      @db.Text
+  created_at  DateTime     @default(now())
+  updated_at  DateTime     @updatedAt
+
+  // 關聯
+  admin admins? @relation(fields: [reviewed_by], references: [id])
+  // (注意: target_id 是多態關聯，Prisma 中需要手動處理邏輯)
+}
+
+// --- 模組四：基礎建設 (張哲瑋) ---
+
+/// 模組四：活動類別表
+model categories {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(50)
+  slug      String   @db.VarChar(50)
+  parent_id Int?
+
+  // 自關聯
+  parent   categories?  @relation("SubCategories", fields: [parent_id], references: [id])
+  children categories[] @relation("SubCategories")
+
+  // 關聯 (反向)
+  events events[]
+}
+
+/// 模組四：活動標籤表
+model tags {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+  slug String @unique @db.VarChar(50)
+
+  // 關聯 (反向)
+  events event_tags[]
+}
+
+/// 模組四：活動-標籤 關聯表 (多對多)
+model event_tags {
+  event_id Int
+  tag_id   Int
+
+  // 關聯
+  event events @relation(fields: [event_id], references: [id])
+  tag   tags   @relation(fields: [tag_id], references: [id])
+
+  @@id([event_id, tag_id]) // 複合主鍵
+}
+
+/// 模組四：活動評價表
+model event_ratings {
+  id         Int      @id @default(autoincrement())
+  event_id   Int
+  user_id    Int
+  rating     Int /// TINYINT (1-5)
+  comment    String?  @db.Text
+  created_at DateTime @default(now())
+
+  // 關聯
+  event events @relation(fields: [event_id], references: [id])
+  user  users  @relation(fields: [user_id], references: [id])
+}
+
+
+// --- 模組二：活動發布與管理 (白宸賓) ---
+
+/// 模組二：活動主表
+model events {
+  id               Int          @id @default(autoincrement())
+  organizer_id     Int
+  title            String       @db.VarChar(255)
+  subtitle         String?      @db.VarChar(255)
+  description      String?      @db.Text
+  cover_image      String?      @db.VarChar(255)
+  start_time       DateTime
+  end_time         DateTime
+  location_name    String?      @db.VarChar(100)
+  address          String?      @db.VarChar(255)
+  latitude         Decimal?     @db.Decimal(10, 8)
+  longitude        Decimal?     @db.Decimal(11, 8)
+  status           EventStatus_M2 @default(PENDING) // 採用模組二的 Enum
+  event_type       EventType
+  online_event_url String?      @db.VarChar(255)
+  category_id      Int?
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+  // 關聯
+  organizer  users       @relation(fields: [organizer_id], references: [id])
+  category   categories? @relation(fields: [category_id], references: [id])
+  // 關聯 (反向)
+  tags         event_tags[]
+  ticket_types ticket_types[]
+  attachments  event_attachments[]
+  guests       event_guests[]
+  coupons      coupons[]
+  ratings      event_ratings[]
+  products     events_products[]
+  posts        organizer_posts[] // 關聯到模組五
+}
+
+/// 模組二：票券種類
+model ticket_types {
+  id              Int      @id @default(autoincrement())
+  event_id        Int
+  name            String   @db.VarChar(100)
+  price           Decimal  @db.Decimal(10, 2) /// 價格在這裡！
+  total_quantity  Int
+  sale_start_time DateTime
+  sale_end_time   DateTime
+
+  // 關聯
+  event events @relation(fields: [event_id], references: [id])
+
+  // 關聯 (反向，給模組三使用)
+  cart_items  Cart_Item[]
+  order_items Order_Item[]
+}
+
+/// 模組二：活動附件
+model event_attachments {
+  id        Int     @id @default(autoincrement())
+  event_id  Int
+  file_name String  @db.VarChar(255)
+  file_url  String  @db.VarChar(255)
+  file_type String? @db.VarChar(50)
+
+  // 關聯
+  event events @relation(fields: [event_id], references: [id])
+}
+
+/// 模組二：活動嘉賓/報名者 (非持票人)
+model event_guests {
+  id       Int         @id @default(autoincrement())
+  event_id Int
+  user_id  Int? /// 可為空 (非會員)
+  name     String      @db.VarChar(100)
+  email    String      @db.VarChar(255)
+  phone    String?     @db.VarChar(20)
+  status   GuestStatus @default(INVITED)
+
+  // 關聯
+  event events @relation(fields: [event_id], references: [id])
+  user  users? @relation(fields: [user_id], references: [id])
+}
+
+/// 模組二：優惠券
+model coupons {
+  id             Int          @id @default(autoincrement())
+  event_id       Int? /// 可為空 (全站)
+  code           String       @unique @db.VarChar(50)
+  discount_type  CouponType
+  discount_value Decimal      @db.Decimal(10, 2)
+  max_usage      Int
+  current_usage  Int          @default(0)
+  expires_at     DateTime
+  status         CouponStatus @default(ACTIVE)
+
+  // 關聯
+  event events? @relation(fields: [event_id], references: [id])
+
+  // (NEW!) 關聯 (反向)：一個優惠券可以被多筆訂單使用
+  orders orders[]
+}
+
+// --- 模組三：購物流程與金流 (蔡育穎 - 您的模組) ---
+
+/// 模組三：商城商品 (來自 M3 CSV)
+model products {
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  base_price  Decimal  @db.Decimal(10, 2)
+  image_url   String?  @db.VarChar(255)
+
+  // 關聯 (反向)
+  variants Product_Spec[]
+  events   events_products[]
+}
+
+/// 模組三：商城商品 - 規格 (來自 M3 CSV，已更名)
+model Product_Spec {
+  id             Int      @id @default(autoincrement())
+  product_id     Int
+  sku            String?  @unique @db.VarChar(100)
+  option1_name   String?  @db.VarChar(50)
+  option1_value  String?  @db.VarChar(50)
+  option2_name   String?  @db.VarChar(50)
+  option2_value  String?  @db.VarChar(50)
+  price_offset   Decimal  @default(0) @db.Decimal(10, 2)
+  stock_quantity Int      @default(0)
+
+  // 關聯
+  product products @relation(fields: [product_id], references: [id])
+
+  // 關聯 (反向)
+  cart_items  Cart_Item[]
+  order_items Order_Item[]
+}
+
+/// (NEW!) 模組三：(中間表) 活動-商品 關聯表
+/// 這是根據您的「多對多」需求 (來自 M3 CSV) 新增的
+model events_products {
+  event_id   Int
+  product_id Int
+
+  // 關聯
+  event   events   @relation(fields: [event_id], references: [id])
+  product products @relation(fields: [product_id], references: [id])
+
+  @@id([event_id, product_id]) // 複合主鍵
+}
+
+/// 模組三：購物車 (來自 M3 CSV)
+model carts {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      @unique
+  updated_at DateTime @default(now()) @updatedAt
+
+  // 關聯
+  user  users        @relation(fields: [user_id], references: [id])
+  items Cart_Item[]
+}
+
+/// 模組三：購物車項目 (來自 M3 CSV，已更名，Enum 已修正)
+model Cart_Item {
+  id                 Int      @id @default(autoincrement())
+  cart_id            Int
+  item_type          ItemType /// (修正) Enum: ticket_types 或 products
+  ticket_type_id     Int? /// 關聯到 ticket_types
+  product_variant_id Int? /// 關聯到 Product_Spec
+  quantity           Int
+  added_at           DateTime @default(now())
+
+  // 關聯
+  cart              carts          @relation(fields: [cart_id], references: [id])
+  ticket_type       ticket_types?  @relation(fields: [ticket_type_id], references: [id])
+  product_variant   Product_Spec?  @relation(fields: [product_variant_id], references: [id])
+
+  @@unique([cart_id, ticket_type_id, product_variant_id])
+}
+
+/// 模組三：訂單主表 (來自 M3 CSV，已補上優惠券欄位)
+model orders {
+  id              Int         @id @default(autoincrement())
+  order_number    String      @unique @db.VarChar(50)
+  user_id         Int
+
+  // (NEW!) 價格計算欄位 (基於 M3 CSV 欄位)
+  subtotal        Decimal     @db.Decimal(10, 2) /// (NEW) 商品小計 (折扣前)
+  discount_amount Decimal     @default(0) @db.Decimal(10, 2) /// (NEW) 折扣金額 (來自優惠券)
+  total_amount    Decimal     @db.Decimal(10, 2) /// (修正) 應付總額 (subtotal - discount)
+
+  // (NEW!) 優惠券快照欄位 (我們討論的結果)
+  coupon_id       Int?        /// (NEW) 使用的 coupon id (FK), 允許 null
+  coupon_code     String?     @db.VarChar(50) /// (NEW) 使用的 coupon 代碼 (快照), 允許 null
+
+  status          OrderStatus @default(pending)
+  billing_name    String      @db.VarChar(100)
+  billing_phone   String      @db.VarChar(20)
+  billing_address String?     @db.Text
+  payment_method  String?     @db.VarChar(50)
+  created_at      DateTime    @default(now())
+  expires_at      DateTime
+
+  // 關聯
+  user         users           @relation(fields: [user_id], references: [id])
+  order_items  Order_Item[]
+  transactions transactions[]
+  coupon       coupons?        @relation(fields: [coupon_id], references: [id]) // (NEW!) 關聯到優惠券
+}
+
+/// 模組三：訂單項目 (來自 M3 CSV，已更名)
+model Order_Item {
+  id                 Int      @id @default(autoincrement())
+  order_id           Int
+  item_type          ItemType /// (修正) Enum: ticket_types 或 products
+
+  // (修正) CSV 寫 item_id，我將其拆分為兩個明確的 FK
+  ticket_type_id     Int?
+  product_variant_id Int?
+
+  // (快照欄位)
+  item_name          String   @db.VarChar(255)
+  variant_description String?  @db.VarChar(100)
+  quantity           Int
+  unit_price         Decimal  @db.Decimal(10, 2)
+  delivery_method    DeliveryMethod?
+
+  // 關聯
+  order           orders          @relation(fields: [order_id], references: [id])
+  ticket_type     ticket_types?   @relation(fields: [ticket_type_id], references: [id])
+  product_variant Product_Spec?   @relation(fields: [product_variant_id], references: [id])
+
+  // 關聯 (反向)：一個訂單項目可以有多個「報名資料」
+  registrations Ticket_Registration[]
+}
+
+/// 模組三：交易 (金流) (來自 M3 CSV)
+model transactions {
+  id             Int               @id @default(autoincrement())
+  order_id       Int
+  amount         Decimal           @db.Decimal(10, 2)
+  status         TransactionStatus @default(pending)
+  payment_method String?           @db.VarChar(50)
+  transaction_id String?           @db.VarChar(255) /// 金流商 ID
+  paid_at        DateTime?
+
+  // 關聯
+  order orders @relation(fields: [order_id], references: [id])
+}
+
+/// 模組三：票券報名資料 (來自 M3 CSV，這就是「參加者」表)
+model Ticket_Registration {
+  id            Int      @id @default(autoincrement())
+  order_item_id Int
+  name          String   @db.VarChar(100) /// (快照) 參加者的姓名
+  email         String   @db.VarChar(255) /// (快照) 參加者的 Email
+  phone         String?  @db.VarChar(20)  /// (快照) 參加者的電話
+  gender        String?  @db.VarChar(10)  /// (快照) 參加者的性別
+  user_id       Int?     /// (可選) 關聯到 users(id)
+
+  // 關聯
+  order_item Order_Item @relation(fields: [order_item_id], references: [id])
+  user       users?     @relation(fields: [user_id], references: [id])
+
+  // 關聯 (反向)：一筆報名資料會對應到一張電子票券
+  ticket tickets?
+}
+
+// --- 模組四 的 票券相關 (來自 舊「模組四」/ 您的需求) ---
+// (這兩張表在您提供的 CSV 中沒有，但是是您「驗票」和「產生電子票券」需求所必需的)
+// (check_ins 已使用您最新的定義)
+
+/// (重要!) 電子票券 (來自 舊「模組四」.csv / 您的需求)
+model tickets {
+  id              Int          @id @default(autoincrement())
+  registration_id Int          @unique /// (修正) 關聯到 Ticket_Registration(id)
+  qr_code_data    String       @unique @db.VarChar(255)
+  status          TicketStatus @default(VALID) /// (FIX) 使用了已補上的 TicketStatus
+  issued_at       DateTime     @default(now())
+
+  // 關聯
+  registration Ticket_Registration @relation(fields: [registration_id], references: [id])
+
+  // 關聯 (反向)
+  check_in check_ins?
+}
+
+/// (重要!) 報到紀錄 (來自 您最新的指示 / 模組二)
+model check_ins {
+  id         Int           @id @default(autoincrement())
+  ticket_id  Int           @unique /// 一張票只能報到一次
+  scanner_id Int /// 掃描人員 (FK -> users.id)
+  scan_time  DateTime      @default(now()) /// (修正) 您的定義是 (NULLABLE)，但 @default(now()) 更實用
+  status     CheckInStatus
+
+  // 關聯
+  ticket  tickets @relation(fields: [ticket_id], references: [id])
+  scanner users   @relation(fields: [scanner_id], references: [id])
+}
+
+// --- 模組五：線上活動与互動 (蕭博允) ---
+
+/// 模組五：使用者投稿
+model user_posts {
+  id           Int      @id @default(autoincrement())
+  author_id    Int /// FK → users.id
+  title        String   @db.VarChar(150)
+  content      String   @db.Text
+  category_id  Int? /// FK → post_categories.id
+  status       PostStatus @default(pending)
+  created_at   DateTime @default(now())
+  published_at DateTime?
+  article_id   String?  @db.VarChar(150) /// 連結活動頁按鈕 FK -> event.id? (CSV 寫 VARCHAR)
+
+  // 關聯
+  author   users           @relation(fields: [author_id], references: [id])
+  category post_categories? @relation(fields: [category_id], references: [id])
+
+  // 關聯 (反向)
+  images  post_images[]
+  reviews post_reviews[]
+}
+
+/// 模組五：主辦方專欄 (來自 CSV)
+model organizer_posts {
+  id             Int      @id @default(autoincrement())
+  organizer_id   Int
+  title          String   @db.VarChar(150)
+  content        String   @db.Text
+  cover_image    String?  @db.VarChar(255)
+  activity_id    Int? /// 對應活動表 (events.id)
+  view_count     Int?     @default(0)
+  favorite_count Int?     @default(0)
+  created_at     DateTime @default(now())
+
+  // 關聯
+  organizer users  @relation(fields: [organizer_id], references: [id])
+  event     events? @relation(fields: [activity_id], references: [id])
+}
+
+/// 模組五：文章圖片表
+model post_images {
+  id         Int      @id @default(autoincrement())
+  post_id    Int /// FK → user_posts.id
+  image_url  String   @db.VarChar(255)
+  is_cover   Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // 關聯
+  post user_posts @relation(fields: [post_id], references: [id])
+}
+
+/// 模組五：文章類別
+model post_categories {
+  id   Int    @id @default(autoincrement())
+  name String @unique @db.VarChar(50)
+
+  // 關聯 (反向)
+  posts user_posts[]
+}
+
+/// 模組五：留言系統
+model post_reviews {
+  id         Int      @id @default(autoincrement())
+  post_id    Int /// FK → user_posts.id
+  user_id    Int /// FK → users.id
+  content    String   @db.Text
+  rating     Int?
+  created_at DateTime @default(now())
+
+  // 關聯
+  post user_posts @relation(fields: [post_id], references: [id])
+  user users      @relation(fields: [user_id], references: [id])
+}
+
+/// 模組五：平台審核
+model review_logs {
+  id          Int      @id @default(autoincrement())
+  post_id     Int /// 對應 user_posts.id
+  admin_id    Int
+  result      String   @db.VarChar(50) /// ENUM('approved','rejected')
+  reason      String?  @db.Text
+  reviewed_at DateTime @default(now())
+
+  // 關聯
+  // (這與 模組一的 `reviews` 表高度重疊，建議團隊整合)
+  admin users @relation("Reviewer", fields: [admin_id], references: [id])
+  // post  user_posts @relation(fields: [post_id], references: [id]) // 關聯 post_id
+}
