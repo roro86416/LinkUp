@@ -1,4 +1,4 @@
-import app from "./app";
+import app from "./app.js";
 
 // --- 伺服器設定 ---
 const port = process.env.PORT || 3001;
