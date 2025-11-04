@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -8,182 +8,234 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// --- 模組三：相關的枚舉 (Enums) ---
+// -------------------------------------------------
+// 專案共用的枚舉 (Enums)
+// -------------------------------------------------
 
-// 訂單狀態 (來自 Order 表)
+// --- 模組三：的枚舉 ---
 enum OrderStatus {
-  pending   // 待付款
-  paid      // 已付款
-  shipped   // (商品) 已出貨
-  completed // (流程) 已完成
-  cancelled // 已取消
+  pending
+  paid
+  shipped
+  completed
+  cancelled
 }
 
-// 項目類型 (來自 CartItem / OrderItem 表)
 enum ItemType {
-  ticket_types // 票券
-  products     // 商品
+  ticket_types
+  products
 }
 
-// (商品) 運送方式 (來自 OrderItem 表)
 enum DeliveryMethod {
-  shipping       // 宅配
-  on_site_pickup // 現場取貨
+  shipping
+  on_site_pickup
+}
+
+// --- 模組二 & 四 的枚舉 ---
+enum EventStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum EventType {
+  OFFLINE
+  ONLINE
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum CheckInStatus {
+  SUCCESS
+  DUPLICATE
+  INVALID
+}
+
+enum TicketStatus {
+  VALID
+  USED
+  EXPIRED
+  CANCELLED
+}
+
+enum UserRole {
+  USER
+  ORGANIZER
+  ADMIN
+}
+
+// -------------------------------------------------
+// 模組一：共用模型 (User)
+// -------------------------------------------------
+model User {
+  id    Int    @id @default(autoincrement())
+  email String @unique
+  name  String?
+  role  UserRole @default(USER)
+
+  organizedEvents Event[] @relation("OrganizedBy")
+  cart    Cart?
+  orders  Order[]
+  scannedLogs CheckIn[] @relation("ScannedBy")
+  tickets     Ticket[]  @relation("OwnedBy")
+
+  Review Review[]
+}
+
+// -------------------------------------------------
+// 模組二：的依賴模型
+// -------------------------------------------------
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  parentId  Int?      @map("parent_id")
+  parent    Category? @relation("CategoryParent", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryParent")
+  events    Event[]
+
+  @@map("categories")
+  @@index([parentId])
 }
 
 
-// --- 1. 商城 (Products) ---
-// 商品
+model Tag {
+  id     Int     @id @default(autoincrement())
+  name   String  @unique
+  events Event[] @relation("EventTags")
+}
+
+// -------------------------------------------------
+// 模組三：商城 (Products) 
+// -------------------------------------------------
 model Product {
   id          Int      @id @default(autoincrement())
-  name        String   @db.VarChar(255) /// 商品名稱
-  description String?  @db.Text /// 商品描述
-  base_price  Decimal  @db.Decimal(10, 2) /// 商品基本價格
-  image_url   String?  @db.VarChar(255) /// 商品圖片
-  is_published Boolean  @default(false)
-  // 關聯：一個商品有多個規格
-  variants ProductVariant[]
+  name        String   @db.VarChar(255)
+  description String?  @db.Text
+  base_price  Decimal  @db.Decimal(10, 2)
+  image_url   String?  @db.VarChar(255)
+  variants    ProductVariant[]
   
-  // 關聯：活動-商品 多對多
   events_products EventsProducts[]
-  
-  @@map("products") // 對應 CSV 表名
+
+  @@map("products")
 }
 
-// 商品規格
 model ProductVariant {
-  id             Int     @id @default(autoincrement()) /// 規格 ID
-  product_id     Int
-  product        Product @relation(fields: [product_id], references: [id], onDelete: Cascade)
-  sku            String? @unique @db.VarChar(100)
-  option1_name   String? @db.VarChar(50)
-  option1_value  String? @db.VarChar(50)
-  option2_name   String? @db.VarChar(50)
-  option2_value  String? @db.VarChar(50)
-  price_offset   Decimal @default(0) @db.Decimal(10, 2)
-  stock_quantity Int     @default(0) @map("stock") // CSV 中欄位名為 stock
-  // 關聯：此規格在哪些購物車項目中
-  cart_items CartItem[]
-  // 關聯：此規格在哪些訂單項目中
-  order_items OrderItem[]
-  
-  @@map("ProductVariant") // 對應 CSV 表名
+  id               Int      @id @default(autoincrement())
+  product_id       Int
+  product          Product  @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  sku              String?  @unique @db.VarChar(100)
+  option1_name     String?  @db.VarChar(50)
+  option1_value    String?  @db.VarChar(50)
+  option2_name     String?  @db.VarChar(50)
+  option2_value    String?  @db.VarChar(50)
+  price_offset     Decimal  @default(0) @db.Decimal(10, 2)
+  stock_quantity   Int      @default(0) @map("stock")
+  cart_items       CartItem[]
+  order_items      OrderItem[]
+
+  @@map("ProductVariant")
 }
 
-// 活動-商品 關聯表
 model EventsProducts {
   event_id   Int
   product_id Int
   
-  // (未來關聯：活動)
-  // event   Event   @relation(fields: [event_id], references: [id])
-  // (關聯：商品)
+  event   Event   @relation(fields: [event_id], references: [id])
   product Product @relation(fields: [product_id], references: [id])
-  
-  @@id([event_id, product_id]) // 複合主鍵
-  @@map("events_products") // 對應 CSV 表名
+
+  @@id([event_id, product_id])
+  @@map("events_products")
 }
 
-
-// --- 2. 購物車 (Carts) ---
-
+// -------------------------------------------------
+// 模組三：購物車 (Carts) 
+// -------------------------------------------------
 model Cart {
   id         Int       @id @default(autoincrement())
-  user_id    Int       @unique // (未來關聯 User(id))
+  user_id    Int       @unique
   updated_at DateTime? @updatedAt
+  items      CartItem[]
 
-  // 關聯：一個購物車有多個項目
-  items CartItem[]
-  
-  // (未來關聯：使用者)
-  // user    User    @relation(fields: [user_id], references: [id])
+  user User @relation(fields: [user_id], references: [id])
 
-  @@map("Cart") // 對應 CSV 表名
+  @@map("Cart")
 }
 
 model CartItem {
-  id        Int      @id @default(autoincrement())
-  cart_id   Int
-  cart      Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
-  item_type ItemType // ENUM('ticket_types', 'products')
+  id           Int      @id @default(autoincrement())
+  cart_id      Int
+  cart         Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  item_type    ItemType
+  quantity     Int
+  added_at     DateTime @default(now())
 
-  // (未來關聯：票種)
   ticket_type_id Int?
+  ticket_type    TicketType? @relation(fields: [ticket_type_id], references: [id])
 
-  // (關聯：商品規格)
   product_variant_id Int?
   product_variant    ProductVariant? @relation(fields: [product_variant_id], references: [id])
 
-  quantity Int
-  added_at DateTime @default(now())
-
-  @@map("CartItem") // 對應 CSV 表名
+  @@map("CartItem")
 }
 
-
-// --- 3. 結帳 (Orders) ---
-
+// -------------------------------------------------
+// 模組三：結帳 (Orders)
+// -------------------------------------------------
 model Order {
-  id              Int       @id @default(autoincrement())
-  order_number    String    @unique @db.VarChar(50)
-  user_id         Int       // (未來關聯 User(id))
-  
-  subtotal        Decimal   @db.Decimal(10, 2)
-  discount_amount Decimal   @default(0) @db.Decimal(10, 2)
-  total_amount    Decimal   @db.Decimal(10, 2)
-  
-  coupon_id       Int?      // (未來關聯 Coupon(id))
-  coupon_code     String?   @db.VarChar(50)
-  
+  id              Int         @id @default(autoincrement())
+  order_number    String      @unique @db.VarChar(50)
+  user_id         Int
+  subtotal        Decimal     @db.Decimal(10, 2)
+  discount_amount Decimal     @default(0) @db.Decimal(10, 2)
+  total_amount    Decimal     @db.Decimal(10, 2)
+  coupon_code     String?     @db.VarChar(50)
   status          OrderStatus @default(pending)
-  
-  billing_name    String    @db.VarChar(100)
-  billing_phone   String    @db.VarChar(20)
-  billing_address String?   @db.Text
-  
-  payment_method  String?   @db.VarChar(50)
-  created_at      DateTime  @default(now())
+  billing_name    String      @db.VarChar(100)
+  billing_phone   String      @db.VarChar(20)
+  billing_address String?     @db.Text
+  payment_method  String?     @db.VarChar(50)
+  created_at      DateTime    @default(now())
   expires_at      DateTime
+  items           OrderItem[]
 
-  // 關聯：一個訂單有多個項目
-  items OrderItem[]
-  
-  // (未來關聯：使用者)
-  // user          User     @relation(fields: [user_id], references: [id])
-  
-  @@map("Order") // 對應 CSV 表名
+  user User @relation(fields: [user_id], references: [id])
+
+  coupon_id Int?
+  coupon    Coupon? @relation(fields: [coupon_id], references: [id])
+
+  @@map("Order")
 }
 
 model OrderItem {
   id                  Int      @id @default(autoincrement())
   order_id            Int
-  order               Order    @relation(fields: [order_id], references: [id], onDelete:Cascade)
+  order               Order    @relation(fields: [order_id], references: [id], onDelete: Cascade)
   item_type           ItemType
-  // (未來關聯：票種)
-  ticket_type_id      Int? 
-  // (關聯：商品規格)
-  product_variant_id Int?
-  product_variant     ProductVariant? @relation(fields: [product_variant_id], references: [id])
-  // (快照)
   item_name           String   @db.VarChar(255)
   variant_description String?  @db.VarChar(100)
   quantity            Int
   unit_price          Decimal  @db.Decimal(10, 2)
   delivery_method     DeliveryMethod?
 
-  // (未來關聯：電子票券)
-  // tickets             Ticket[]
+  ticket_type_id Int?
+  ticket_type    TicketType? @relation(fields: [ticket_type_id], references: [id])
 
-  // (新增) 關聯：一個訂單項目對應一筆報名資料
+  product_variant_id Int?
+  product_variant    ProductVariant? @relation(fields: [product_variant_id], references: [id])
+
   ticket_registration TicketRegistration?
 
-  @@map("OrderItem") // 對應 CSV 表名
+  @@map("OrderItem")
 }
 
-//票券報名資料
 model TicketRegistration {
-  id           Int    @id @default(autoincrement())
-  order_item_id Int    @unique // (重要) 關聯到訂單項目 (一對一)
+  id            Int       @id @default(autoincrement())
+  order_item_id Int       @unique
   order_item    OrderItem @relation(fields: [order_item_id], references: [id], onDelete: Cascade)
   // (未來關聯：票券)
   ticket_id     Int?   @unique
