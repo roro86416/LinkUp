@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../src/generated/prisma"
 }
 
@@ -253,13 +253,11 @@ enum OrderStatus {
   cancelled // 已取消
 }
 
-// 項目類型 (來自 CartItem / OrderItem 表)
 enum ItemType {
   ticket_types // 票券
   products // 商品
 }
 
-// (商品) 運送方式 (來自 OrderItem 表)
 enum DeliveryMethod {
   shipping // 宅配
   on_site_pickup // 現場取貨
@@ -283,7 +281,6 @@ model Product {
   @@map("products") // 對應 CSV 表名
 }
 
-// 商品規格
 model ProductVariant {
   id         Int     @id @default(autoincrement()) /// 規格 ID
   product_id Int
@@ -306,7 +303,6 @@ model ProductVariant {
   @@map("ProductVariant") // 對應 CSV 表名
 }
 
-// 活動-商品 關聯表
 model EventsProducts {
   event_id   Int
   product_id Int
@@ -320,12 +316,14 @@ model EventsProducts {
   @@map("events_products") // 對應 CSV 表名
 }
 
+
 // --- 2. 購物車 (Carts) ---
 
 model Cart {
   id         Int       @id @default(autoincrement())
-  user_id    Int       @unique // (未來關聯 User(id))
+  user_id    Int       @unique
   updated_at DateTime? @updatedAt
+  items      CartItem[]
 
   // 關聯：一個購物車有多個項目
   items CartItem[]
@@ -337,26 +335,25 @@ model Cart {
 }
 
 model CartItem {
-  id        Int      @id @default(autoincrement())
-  cart_id   Int
-  cart      Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
-  item_type ItemType // ENUM('ticket_types', 'products')
+  id           Int      @id @default(autoincrement())
+  cart_id      Int
+  cart         Cart     @relation(fields: [cart_id], references: [id], onDelete: Cascade)
+  item_type    ItemType
+  quantity     Int
+  added_at     DateTime @default(now())
 
-  // (未來關聯：票種)
   ticket_type_id Int?
+  ticket_type    TicketType? @relation(fields: [ticket_type_id], references: [id])
 
-  // (關聯：商品規格)
   product_variant_id Int?
   product_variant    ProductVariant? @relation(fields: [product_variant_id], references: [id])
 
-  quantity Int
-  added_at DateTime @default(now())
-
-  @@map("CartItem") // 對應 CSV 表名
+  @@map("CartItem")
 }
 
-// --- 3. 結帳 (Orders) ---
-
+// -------------------------------------------------
+// 模組三：結帳 (Orders)
+// -------------------------------------------------
 model Order {
   id           Int    @id @default(autoincrement())
   order_number String @unique @db.VarChar(50)
@@ -405,16 +402,17 @@ model OrderItem {
   unit_price          Decimal         @db.Decimal(10, 2)
   delivery_method     DeliveryMethod?
 
-  // (未來關聯：電子票券)
-  // tickets             Ticket[]
+  ticket_type_id Int?
+  ticket_type    TicketType? @relation(fields: [ticket_type_id], references: [id])
 
-  // (新增) 關聯：一個訂單項目對應一筆報名資料
+  product_variant_id Int?
+  product_variant    ProductVariant? @relation(fields: [product_variant_id], references: [id])
+
   ticket_registration TicketRegistration?
 
-  @@map("OrderItem") // 對應 CSV 表名
+  @@map("OrderItem")
 }
 
-//票券報名資料
 model TicketRegistration {
   id            Int       @id @default(autoincrement())
   order_item_id Int       @unique // (重要) 關聯到訂單項目 (一對一)
@@ -428,3 +426,85 @@ model TicketRegistration {
 
   @@map("Ticket_Registration") // 對應 CSV 表名
 }
+
+model contact_tags {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model post_category {
+  id       Int        @id @default(autoincrement())
+  name     String
+  userpost userpost[]
+}
+
+model post_comments {
+  id         Int                  @id @default(autoincrement())
+  content    String
+  rating     post_comments_rating
+  created_at DateTime
+  post_id    Int
+  authorId   Int
+  users      users                @relation(fields: [authorId], references: [id])
+  userpost   userpost             @relation(fields: [post_id], references: [id])
+
+  @@index([authorId], map: "post_comments_authorId_fkey")
+  @@index([post_id], map: "post_comments_post_id_fkey")
+}
+
+model post_images {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  imageUrl  String   @db.VarChar(255)
+  isCover   Boolean  @default(false)
+  createdAt DateTime @default(now())
+  userpost  userpost @relation(fields: [postId], references: [id])
+
+  @@index([postId], map: "post_images_postId_fkey")
+}
+
+model post_tags {
+  id   Int    @id @default(autoincrement())
+  name String
+}
+
+model userpost {
+  id            Int             @id @default(autoincrement())
+  authorId      Int
+  title         String          @db.VarChar(150)
+  content       String
+  categoryId    Int
+  status        userpost_status @default(pending)
+  createdAt     DateTime        @default(now())
+  publishedAt   DateTime?
+  articleId     Int?
+  post_comments post_comments[]
+  post_images   post_images[]
+  users         users           @relation(fields: [authorId], references: [id], map: "UserPost_authorId_fkey")
+  post_category post_category   @relation(fields: [categoryId], references: [id], map: "UserPost_categoryId_fkey")
+
+  @@index([authorId], map: "UserPost_authorId_fkey")
+  @@index([categoryId], map: "UserPost_categoryId_fkey")
+}
+
+model users {
+  id            Int             @id @default(autoincrement())
+  name          String?
+  post_comments post_comments[]
+  userpost      userpost[]
+}
+
+enum post_comments_rating {
+  one
+  two
+  three
+  four
+  five
+}
+
+enum userpost_status {
+  pending
+  approved
+  rejected
+}
+

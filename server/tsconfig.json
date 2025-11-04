@@ -1,13 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "CommonJS",
-    "rootDir": "./src",
+    "target": "ES2020", // 目標 JavaScript 版本
+    "module": "ESNext", // 模組系統
+    // "moduleResolution": "node", // 模組解析方式
+    "rootDir": "./src", 
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    // "verbatimModuleSyntax": true,
+    // "experimentalDecorators": true,
+    // "emitDecoratorMetadata": true
   },
   "include": ["src/**/*"]
 }
