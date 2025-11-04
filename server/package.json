@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-"dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "dev": "tsx watch src/index.ts",
     "prisma": "prisma",
     "postinstall": "pnpm prisma generate"
   },
@@ -26,8 +26,6 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
-    "@linkup/eslint-config-custom": "file:packages/eslint-config-custom",
-    "@linkup/types": "file:packages/types",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^20.19.23",
