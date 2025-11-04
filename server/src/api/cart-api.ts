@@ -2,7 +2,7 @@ import express, { Router, Request, Response, NextFunction } from "express";
 import { PrismaClient } from "../generated/prisma/client";
 import verify from "../middleware/verify.middleware";
 import { addToCartSchema, AddToCartBody } from "../utils/cart.schema";
-
+import {z} from "zod"
 const router: Router = express.Router();
 const prisma = new PrismaClient();
 
