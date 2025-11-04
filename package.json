@@ -13,5 +13,8 @@
   "packageManager": "pnpm@10.15.0",
   "dependencies": {
     "dotenv": "^17.2.3"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
   }
 }
