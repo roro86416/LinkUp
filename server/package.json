@@ -7,7 +7,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
-    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
+"dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "prisma": "prisma",
+    "postinstall": "pnpm prisma generate"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
