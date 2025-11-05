@@ -6,7 +6,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 
 // ✅ 直接放入這裡的 registerUser function
 async function registerUser(email: string, password: string, name?: string) {
-  const res = await fetch('http://localhost:4000/api/register', {
+  const res = await fetch('http://localhost:3001/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, name }),

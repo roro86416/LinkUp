@@ -1,84 +1,53 @@
+// server/src/app.ts
+import dotenv from "dotenv";
+dotenv.config(); // 🔹 dotenv 最前面，確保 process.env 可用
+
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import registerRoutes from "./api/register-api.js"; // 不加 .js，TypeScript 自動解析
 
-// 現有模組路由
-import organizerRoutes from "./api/api-organizer.js";
-import productRoutes from "./api/products-api.js";
-
-dotenv.config();
+// 建立 Express app 與 Prisma client
 const app: Express = express();
 const prisma = new PrismaClient();
 
 // --- 中間件 ---
-app.use(cors());
+app.use(cors({ origin: "http://localhost:3000" })); // 前端 Next.js 預設 3000
 app.use(express.json());
+
+// --- 環境變數檢查 ---
+console.log("🚀 Environment variables:", { DATABASE_URL: process.env.DATABASE_URL });
 
 // --- 測試路由 ---
 app.get("/api/test", (req: Request, res: Response) => {
   res.json({ message: "愛來自LinkUp伺服器! 🚀" });
 });
 
-// --- 註冊 API ---
-app.post("/api/register", async (req: Request, res: Response) => {
-  const { email, password, name } = req.body;
-
-  if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
-  }
-
-  try {
-    const existingUser = await prisma.users.findUnique({ where: { email } });
-    if (existingUser) {
-      return res.status(409).json({ message: "Email already used" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // 先建立 user，再建立 profile 避免一對一關聯錯誤
-    const user = await prisma.users.create({
-      data: { email, password_hash: hashedPassword },
-    });
-
-    await prisma.user_profiles.create({
-      data: { user_id: user.id, name: name || "" },
-    });
-
-    res.status(201).json({ message: "User registered successfully", userId: user.id });
-  } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ message: err.message || "Server error" });
-  }
-});
+// --- 註冊路由 ---
+// 將 register-api.ts 的 router 掛載到 /api/register
+app.use("/api/register", registerRoutes);
 
 // --- 登入 API ---
 app.post("/api/login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ message: "Email and password are required" });
+    return res.status(400).json({ message: "Email 和密碼必填" });
   }
 
   try {
     const user = await prisma.users.findUnique({ where: { email } });
-    if (!user) return res.status(401).json({ message: "User not found" });
+    if (!user) return res.status(401).json({ message: "使用者不存在" });
 
     const isValid = await bcrypt.compare(password, user.password_hash || "");
-    if (!isValid) return res.status(401).json({ message: "Incorrect password" });
+    if (!isValid) return res.status(401).json({ message: "密碼錯誤" });
 
-    res.status(200).json({ message: "Login successful", userId: user.id });
+    res.status(200).json({ message: "登入成功", userId: user.id });
   } catch (err: any) {
-    console.error(err);
+    console.error("登入錯誤:", err);
     res.status(500).json({ message: err.message || "Server error" });
   }
 });
-
-// --- 產品路由 (模組三) ---
-app.use("/api/v1/products", productRoutes);
-
-// --- 主辦方路由 (模組二) ---
-app.use("/api/v1/organizer", organizerRoutes);
 
 export default app;

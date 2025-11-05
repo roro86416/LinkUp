@@ -11,24 +11,19 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-
     // ✅ 使用新版建議的 module 與 moduleResolution
     "module": "ESNext",
     "moduleResolution": "bundler",
-
-    // ✅ 加入過時警告忽略設定（避免 baseUrl / node10 提示）
-    "ignoreDeprecations": "6.0",
-
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
+    "jsx": "preserve",
     "incremental": true,
-
     "plugins": [
-      { "name": "next" }
+      {
+        "name": "next"
+      }
     ],
-
-    // ✅ 保留你的路徑別名設定
+    // ✅ 路徑別名
     "paths": {
       "@/*": [
         "./*"
@@ -39,11 +34,9 @@
     "next-env.d.ts",
     "**/*.ts",
     "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts",
     "**/*.mts",
-    ".next\\dev/types/**/*.ts",
-    ".next\\dev/types/**/*.ts"
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
